@@ -2,7 +2,6 @@ fastapi
 uvicorn
 pydantic
 langchain
-langchain-community
 langchain-openai
 langgraph
 chromadb
@@ -11,3 +10,5 @@ openai
 python-dotenv
 scikit-learn
 rouge-score
+langchain-huggingface
+langchain-chroma

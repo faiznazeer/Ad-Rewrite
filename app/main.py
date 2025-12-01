@@ -38,6 +38,16 @@ def run_agent(req: RunAgentRequest):
 		length_map=req.length_prefs,
 	)
 	latency_ms = int((time.monotonic() - start) * 1000)
+	# Normalize results to a flat list of dicts
+	normalized: list[dict] = []
+	for r in results:
+		if isinstance(r, dict):
+			normalized.append(r)
+		elif isinstance(r, list):
+			for item in r:
+				if isinstance(item, dict):
+					normalized.append(item)
+	results = normalized
 
 	# simple validation summary
 	validation_summary = {"total": len(results), "ok": 0, "failed": 0}

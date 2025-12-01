@@ -7,16 +7,16 @@ import os
 import re
 import shutil
 import string
+import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain_community.embeddings import SentenceTransformerEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_core.prompts import PromptTemplate
 from langchain_core.language_models import BaseLanguageModel
 from langchain_openai import ChatOpenAI
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 
 load_dotenv()
 
@@ -30,8 +30,10 @@ EMBED_MODEL = os.getenv("EMBED_MODEL_NAME", "all-MiniLM-L6-v2")
 LLM_MODEL = os.getenv("LLM_MODEL_NAME", "gpt-5-mini")
 
 _kg_cache: Dict[str, Any] = {}
-_embeddings: Optional[SentenceTransformerEmbeddings] = None
+_embeddings: Optional[HuggingFaceEmbeddings] = None
 _vectorstore: Optional[Chroma] = None
+_embeddings_lock = threading.Lock()
+_vectorstore_lock = threading.Lock()
 
 PROFANITY_LIST = {"damn", "hell", "shit"}
 CTA_REGEX = re.compile(r"\b(buy|shop|order|get|book|reserve|save|claim)\b", re.IGNORECASE)
@@ -50,10 +52,13 @@ def _load_kg() -> Dict[str, Any]:
     return _kg_cache
 
 
-def _get_embeddings() -> SentenceTransformerEmbeddings:
+def _get_embeddings() -> HuggingFaceEmbeddings:
     global _embeddings
     if _embeddings is None:
-        _embeddings = SentenceTransformerEmbeddings(model_name=EMBED_MODEL)
+        with _embeddings_lock:
+            # Double-check pattern to avoid race condition
+            if _embeddings is None:
+                _embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
     return _embeddings
 
 
@@ -67,12 +72,15 @@ def ensure_vectorstore_ready() -> None:
 def _get_vectorstore() -> Chroma:
     global _vectorstore
     if _vectorstore is None:
-        ensure_vectorstore_ready()
-        _vectorstore = Chroma(
-            collection_name=CHROMA_COLLECTION,
-            persist_directory=str(DEFAULT_CHROMA_DIR),
-            embedding_function=_get_embeddings(),
-        )
+        with _vectorstore_lock:
+            # Double-check pattern to avoid race condition
+            if _vectorstore is None:
+                ensure_vectorstore_ready()
+                _vectorstore = Chroma(
+                    collection_name=CHROMA_COLLECTION,
+                    persist_directory=str(DEFAULT_CHROMA_DIR),
+                    embedding_function=_get_embeddings(),
+                )
     return _vectorstore
 
 
@@ -150,15 +158,19 @@ platform, rewritten_text, explanation
 
 def execute_llm_chain(input_text: str, platform: str, tone: str, entities: Dict[str, Optional[str]], kg_rules: Dict[str, Any], examples: List[Dict[str, Any]]) -> Dict[str, Any]:
     llm = get_llm()
-    chain = LLMChain(prompt=REWRITE_PROMPT, llm=llm)
-    response = chain.run(
-        platform=platform,
-        tone=tone,
-        input_text=input_text,
-        entities=json.dumps(entities),
-        kg_rules=json.dumps(kg_rules),
-        examples=json.dumps(examples[:3]),
+    chain = REWRITE_PROMPT | llm
+    result = chain.invoke(
+        {
+            "platform": platform,
+            "tone": tone,
+            "input_text": input_text,
+            "entities": json.dumps(entities),
+            "kg_rules": json.dumps(kg_rules),
+            "examples": json.dumps(examples[:3]),
+        }
     )
+    # Newer LangChain chat models return a BaseMessage; fall back to string if needed.
+    response = getattr(result, "content", str(result))
     try:
         return json.loads(response)
     except json.JSONDecodeError:

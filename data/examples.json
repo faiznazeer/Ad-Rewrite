@@ -1,0 +1,302 @@
+[
+  {
+    "id": "ins_01",
+    "platform": "instagram",
+    "tone": "fun",
+    "text": "Swipe into our sunset yoga series—spots go fast! 🌅🧘‍♀️"
+  },
+  {
+    "id": "ins_02",
+    "platform": "instagram",
+    "tone": "playful",
+    "text": "Weekend brunch vibes with bottomless cold brew. Tag your crew!"
+  },
+  {
+    "id": "ins_03",
+    "platform": "instagram",
+    "tone": "bold",
+    "text": "Neon kicks dropping at midnight. First 50 get custom laces."
+  },
+  {
+    "id": "ins_04",
+    "platform": "instagram",
+    "tone": "visual",
+    "text": "Glitter gloss + summer glow = iconic selfies all season."
+  },
+  {
+    "id": "ins_05",
+    "platform": "instagram",
+    "tone": "fun",
+    "text": "Our plant wall pop-up is live. Free mini succulents today!"
+  },
+  {
+    "id": "ins_06",
+    "platform": "instagram",
+    "tone": "energetic",
+    "text": "HIIT on the rooftop tonight. Music, lights, sweat."
+  },
+  {
+    "id": "ins_07",
+    "platform": "instagram",
+    "tone": "fun",
+    "text": "Glow bowls stacked with tropical toppings. Come build yours."
+  },
+  {
+    "id": "ins_08",
+    "platform": "instagram",
+    "tone": "visual",
+    "text": "Golden hour sale: 30% off all lenses until 9pm."
+  },
+  {
+    "id": "ins_09",
+    "platform": "instagram",
+    "tone": "bold",
+    "text": "Tattoo-inspired leggings? Yup. Limited collab now streaming."
+  },
+  {
+    "id": "ins_10",
+    "platform": "instagram",
+    "tone": "fun",
+    "text": "Beach towels, louder prints, softer cotton. Drop 4 is here!"
+  },
+  {
+    "id": "lin_01",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "Announcing our mentorship cohort focused on climate analytics."
+  },
+  {
+    "id": "lin_02",
+    "platform": "linkedin",
+    "tone": "neutral",
+    "text": "Q3 insights: How mid-market teams automate onboarding at scale."
+  },
+  {
+    "id": "lin_03",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "Join Thursday's webinar on AI compliance readiness."
+  },
+  {
+    "id": "lin_04",
+    "platform": "linkedin",
+    "tone": "formal",
+    "text": "We are hiring senior product strategists across EMEA."
+  },
+  {
+    "id": "lin_05",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "Case study: Logistics brand cut churn 18% with our stack."
+  },
+  {
+    "id": "lin_06",
+    "platform": "linkedin",
+    "tone": "neutral",
+    "text": "Download the productivity benchmark report for hybrid leaders."
+  },
+  {
+    "id": "lin_07",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "Panel recap: women shaping fintech policy in LATAM."
+  },
+  {
+    "id": "lin_08",
+    "platform": "linkedin",
+    "tone": "neutral",
+    "text": "Secure your seat for our resilience roadmap workshop."
+  },
+  {
+    "id": "lin_09",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "New whitepaper dives into privacy-driven growth loops."
+  },
+  {
+    "id": "lin_10",
+    "platform": "linkedin",
+    "tone": "formal",
+    "text": "Celebrating 1,000 customers and expanding our partner program."
+  },
+  {
+    "id": "fac_01",
+    "platform": "facebook",
+    "tone": "friendly",
+    "text": "Neighborhood night market returns Friday—live bands + bites."
+  },
+  {
+    "id": "fac_02",
+    "platform": "facebook",
+    "tone": "upbeat",
+    "text": "Parents, save 25% on STEM summer camps before May 15."
+  },
+  {
+    "id": "fac_03",
+    "platform": "facebook",
+    "tone": "informal",
+    "text": "DIY patio bundle ships free this week only."
+  },
+  {
+    "id": "fac_04",
+    "platform": "facebook",
+    "tone": "friendly",
+    "text": "Adopt don't shop: Meet 12 rescue pups at our shelter event."
+  },
+  {
+    "id": "fac_05",
+    "platform": "facebook",
+    "tone": "conversational",
+    "text": "Vote on the next limited-batch coffee roast!"
+  },
+  {
+    "id": "fac_06",
+    "platform": "facebook",
+    "tone": "friendly",
+    "text": "Flashback pricing on retro arcade rentals this weekend."
+  },
+  {
+    "id": "fac_07",
+    "platform": "facebook",
+    "tone": "upbeat",
+    "text": "Fundraiser livestream tonight supports music in schools."
+  },
+  {
+    "id": "fac_08",
+    "platform": "facebook",
+    "tone": "friendly",
+    "text": "Farm share boxes now include artisan breads—subscribe!"
+  },
+  {
+    "id": "fac_09",
+    "platform": "facebook",
+    "tone": "conversational",
+    "text": "Community garden toolkit pre-orders now open."
+  },
+  {
+    "id": "fac_10",
+    "platform": "facebook",
+    "tone": "friendly",
+    "text": "Holiday photo mini sessions—book in two clicks."
+  },
+  {
+    "id": "goo_01",
+    "platform": "google",
+    "tone": "neutral",
+    "text": "Shop eco-certified laundry strips with free 2-day shipping."
+  },
+  {
+    "id": "goo_02",
+    "platform": "google",
+    "tone": "neutral",
+    "text": "Compare top-rated budget laptops under $700 today."
+  },
+  {
+    "id": "goo_03",
+    "platform": "google",
+    "tone": "informative",
+    "text": "Reserve downtown coworking desks with hourly passes."
+  },
+  {
+    "id": "goo_04",
+    "platform": "google",
+    "tone": "neutral",
+    "text": "Get replacement water filters delivered quarterly."
+  },
+  {
+    "id": "goo_05",
+    "platform": "google",
+    "tone": "concise",
+    "text": "Upgrade to pro antivirus coverage—save 35% now."
+  },
+  {
+    "id": "goo_06",
+    "platform": "google",
+    "tone": "neutral",
+    "text": "Book pediatric telehealth visits in under 5 minutes."
+  },
+  {
+    "id": "goo_07",
+    "platform": "google",
+    "tone": "informative",
+    "text": "Order all-season tires with mobile installation."
+  },
+  {
+    "id": "goo_08",
+    "platform": "google",
+    "tone": "neutral",
+    "text": "Switch to fiber internet—contracts waived this week."
+  },
+  {
+    "id": "goo_09",
+    "platform": "google",
+    "tone": "concise",
+    "text": "Try chef-prepped vegan meals with zero-delivery fee."
+  },
+  {
+    "id": "goo_10",
+    "platform": "google",
+    "tone": "informative",
+    "text": "Schedule same-day appliance repair with verified techs."
+  },
+  {
+    "id": "tik_01",
+    "platform": "tiktok",
+    "tone": "energetic",
+    "text": "60-sec challenge: remix our choreo and win merch."
+  },
+  {
+    "id": "tik_02",
+    "platform": "tiktok",
+    "tone": "playful",
+    "text": "POV: you discover glow-in-the-dark skincare drops."
+  },
+  {
+    "id": "tik_03",
+    "platform": "tiktok",
+    "tone": "quirky",
+    "text": "ASMR of sour candy + color shifting drinks? yes."
+  },
+  {
+    "id": "tik_04",
+    "platform": "tiktok",
+    "tone": "bold",
+    "text": "Speed run this retro game cabinet build with us."
+  },
+  {
+    "id": "tik_05",
+    "platform": "tiktok",
+    "tone": "fun",
+    "text": "Drop-in thrift haul mystery boxes go live at 7."
+  },
+  {
+    "id": "tik_06",
+    "platform": "tiktok",
+    "tone": "humorous",
+    "text": "Watch the office plants roast our new humidifier."
+  },
+  {
+    "id": "tik_07",
+    "platform": "tiktok",
+    "tone": "edgy",
+    "text": "Claw clip hacks for festival season—duet to flex."
+  },
+  {
+    "id": "tik_08",
+    "platform": "tiktok",
+    "tone": "playful",
+    "text": "Mini chef kit vs chef dad cook-off tonight."
+  },
+  {
+    "id": "tik_09",
+    "platform": "tiktok",
+    "tone": "energetic",
+    "text": "Jump-cut tutorial: get the glossy curls in 90 sec."
+  },
+  {
+    "id": "tik_10",
+    "platform": "tiktok",
+    "tone": "fun",
+    "text": "Vote which neon roller skate wheels glow brightest!"
+  }
+]

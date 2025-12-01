@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+langchain
+langchain-community
+langchain-openai
+langgraph
+chromadb
+sentence-transformers
+openai
+python-dotenv
+scikit-learn
+rouge-score

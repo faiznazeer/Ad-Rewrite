@@ -1,0 +1,47 @@
+{
+  "instagram": {
+    "allow_emojis": true,
+    "max_length_chars": 2200,
+    "preferred_styles": [
+      "fun",
+      "visual"
+    ],
+    "cta_required": false
+  },
+  "linkedin": {
+    "allow_emojis": false,
+    "max_length_chars": 1300,
+    "preferred_styles": [
+      "professional",
+      "neutral"
+    ],
+    "cta_required": true
+  },
+  "facebook": {
+    "allow_emojis": true,
+    "max_length_chars": 2000,
+    "preferred_styles": [
+      "friendly",
+      "conversational"
+    ],
+    "cta_required": true
+  },
+  "google": {
+    "allow_emojis": false,
+    "max_length_chars": 150,
+    "preferred_styles": [
+      "neutral",
+      "concise"
+    ],
+    "cta_required": true
+  },
+  "tiktok": {
+    "allow_emojis": true,
+    "max_length_chars": 2200,
+    "preferred_styles": [
+      "energetic",
+      "playful"
+    ],
+    "cta_required": false
+  }
+}

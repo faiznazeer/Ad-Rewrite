@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 from langchain_core.prompts import PromptTemplate
 from langchain_core.language_models import BaseLanguageModel
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
@@ -203,6 +204,115 @@ def validate_text(text: str, platform: str, kg_rules: Dict[str, Any]) -> Dict[st
     }
 
 
+def create_platform_chain(
+    platform: str,
+    tone: Optional[str] = None,
+    length_pref: Optional[int] = None,
+    top_k: int = 3,
+):
+    """Create a LangChain Runnable chain for a specific platform.
+    
+    The chain processes input text through:
+    1. Sanitization and entity extraction
+    2. Example retrieval
+    3. LLM rewriting
+    4. Validation and repair
+    
+    Args:
+        platform: Platform identifier (e.g., 'instagram', 'linkedin')
+        tone: Optional tone override
+        length_pref: Optional length preference override
+        top_k: Number of examples to retrieve
+        
+    Returns:
+        A LangChain Runnable chain that takes text input and returns platform-specific rewrite result.
+    """
+    kg = _load_kg()
+    if platform not in kg:
+        raise ValueError(f"Unsupported platform {platform}")
+    
+    kg_rules = dict(kg[platform])
+    if length_pref:
+        kg_rules["max_length_chars"] = min(length_pref, kg_rules["max_length_chars"])
+    final_tone = tone or kg_rules["preferred_styles"][0]
+    
+    llm = get_llm()
+    
+    def prepare_context(input_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Prepare context for the LLM chain: sanitize, extract entities, retrieve examples."""
+        text = input_dict["text"]
+        sanitized_text, sanitize_issues = sanitize_text(text)
+        entities = extract_entities(sanitized_text)
+        examples = retrieve_examples(sanitized_text, platform, k=top_k)
+        
+        return {
+            "platform": platform,
+            "tone": final_tone,
+            "input_text": sanitized_text,
+            "entities": json.dumps(entities),
+            "kg_rules": json.dumps(kg_rules),
+            "examples": json.dumps(examples[:3]),
+            "sanitize_issues": sanitize_issues,
+            "original_entities": entities,
+            "examples_used": examples,
+        }
+    
+    def parse_llm_response(input_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Parse LLM response and extract rewritten text."""
+        # The LLM result is passed as a message, extract content
+        llm_result = input_dict.get("llm_result")
+        if llm_result is None:
+            # Fallback if structure is different
+            response = str(input_dict)
+        else:
+            response = getattr(llm_result, "content", str(llm_result))
+        
+        try:
+            llm_output = json.loads(response)
+        except json.JSONDecodeError:
+            llm_output = {
+                "platform": platform,
+                "rewritten_text": response.strip(),
+                "explanation": "Model returned non-JSON, raw text forwarded.",
+            }
+        
+        rewritten_text = llm_output.get("rewritten_text", "").strip() or input_dict.get("input_text", "")
+        
+        return {
+            **input_dict,
+            "llm_output": llm_output,
+            "rewritten_text": rewritten_text,
+        }
+    
+    def validate_and_finalize(input_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate and repair the rewritten text, then format final result."""
+        rewritten_text = input_dict["rewritten_text"]
+        validation = validate_text(rewritten_text, platform, kg_rules)
+        result_text = validation["repaired_text"]
+        validation.pop("repaired_text")
+        validation["issues"].extend(input_dict["sanitize_issues"])
+        
+        return {
+            "platform": platform,
+            "rewritten_text": result_text,
+            "explanation": input_dict["llm_output"].get("explanation", ""),
+            "examples_used": input_dict["examples_used"],
+            "validation": validation,
+            "entities": input_dict["original_entities"],
+        }
+    
+    # Build the chain: prepare context -> prompt -> llm -> parse -> validate
+    # Use RunnablePassthrough to merge the LLM result with the context
+    chain = (
+        RunnableLambda(prepare_context)
+        | RunnablePassthrough.assign(llm_result=REWRITE_PROMPT | llm)
+        | RunnableLambda(parse_llm_response)
+        | RunnableLambda(validate_and_finalize)
+    )
+    
+    return chain
+
+
 def rewrite_for_platform(
     text: str,
     platform: str,
@@ -210,37 +320,28 @@ def rewrite_for_platform(
     length_pref: Optional[int] = None,
     top_k: int = 3,
 ) -> Dict[str, Any]:
-    kg = _load_kg()
-    if platform not in kg:
-        raise ValueError(f"Unsupported platform {platform}")
-    sanitized_text, sanitize_issues = sanitize_text(text)
-    entities = extract_entities(sanitized_text)
-    examples = retrieve_examples(sanitized_text, platform, k=top_k)
-    kg_rules = dict(kg[platform])
-    if length_pref:
-        kg_rules["max_length_chars"] = min(length_pref, kg_rules["max_length_chars"])
-    tone = tone or kg_rules["preferred_styles"][0]
-    llm_output = execute_llm_chain(
-        input_text=sanitized_text,
+    """Rewrite text for a specific platform using the platform chain.
+    
+    This is a convenience wrapper around create_platform_chain for backward compatibility.
+    For new code, prefer using create_platform_chain directly.
+    
+    Args:
+        text: Input text to rewrite.
+        platform: Platform identifier.
+        tone: Optional tone override.
+        length_pref: Optional length preference override.
+        top_k: Number of examples to retrieve.
+        
+    Returns:
+        Platform-specific rewrite result dictionary.
+    """
+    chain = create_platform_chain(
         platform=platform,
         tone=tone,
-        entities=entities,
-        kg_rules=kg_rules,
-        examples=examples,
+        length_pref=length_pref,
+        top_k=top_k,
     )
-    rewritten_text = llm_output.get("rewritten_text", "").strip() or sanitized_text
-    validation = validate_text(rewritten_text, platform, kg_rules)
-    result_text = validation["repaired_text"]
-    validation.pop("repaired_text")
-    validation["issues"].extend(sanitize_issues)
-    return {
-        "platform": platform,
-        "rewritten_text": result_text,
-        "explanation": llm_output.get("explanation", ""),
-        "examples_used": examples,
-        "validation": validation,
-        "entities": entities,
-    }
+    return chain.invoke({"text": text})
 
 
 if __name__ == "__main__":

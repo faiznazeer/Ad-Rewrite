@@ -1,16 +1,15 @@
 """Orchestration layer to run per-platform rewrites in parallel using LangGraph
 
-This implementation uses the `StateGraph` API: each platform is a node that
-writes its result into a shared `results` list using a reducer. The graph is
-compiled and invoked with an initial state and a runtime context containing
-the input text and per-platform overrides.
+This implementation uses the `StateGraph` API: each platform gets its own
+LangChain chain that is executed in parallel. The graph orchestrates these
+chains, with each node creating and invoking a platform-specific chain.
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from agent.platform_agent import rewrite_for_platform
+from agent.platform_agent import create_platform_chain
 
 from typing_extensions import Annotated, TypedDict
 from langgraph.graph import StateGraph, START, END
@@ -38,21 +37,40 @@ class Context(TypedDict, total=False):
 
 
 def _make_platform_node(platform: str):
+    """Create a LangGraph node that executes a platform-specific LangChain chain.
+    
+    Each platform gets its own chain that handles:
+    - Text sanitization and entity extraction
+    - Example retrieval
+    - LLM-based rewriting
+    - Validation and repair
+    
+    Args:
+        platform: Platform identifier (e.g., 'instagram', 'linkedin')
+        
+    Returns:
+        A LangGraph node function that executes the platform chain.
+    """
     def node(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
         ctx = getattr(runtime, "context", None) or {}
         text = ctx.get("text")
         tone_map = ctx.get("tone_map") or {}
         length_map = ctx.get("length_map") or {}
         top_k = ctx.get("top_k", 3)
-        out = rewrite_for_platform(
-            text=text,
+        
+        # Create the platform-specific chain
+        chain = create_platform_chain(
             platform=platform,
             tone=tone_map.get(platform),
             length_pref=length_map.get(platform),
             top_k=top_k,
         )
+        
+        # Invoke the chain with the input text
+        result = chain.invoke({"text": text})
+        
         # return an element to be reduced into `results`
-        return {"results": out}
+        return {"results": result}
 
     return node
 
@@ -64,17 +82,30 @@ def run_parallel_rewrites(
     length_map: Optional[Dict[str, int]] = None,
     top_k: int = 3,
 ) -> List[Dict[str, Any]]:
-    """Run rewrites for multiple platforms using LangGraph StateGraph.
+    """Run rewrites for multiple platforms using LangGraph to orchestrate platform chains.
+
+    Each platform gets its own LangChain chain that is executed in parallel via LangGraph.
+    The chains handle the complete rewrite pipeline:
+    - Text sanitization and entity extraction
+    - Platform-specific example retrieval
+    - LLM-based rewriting
+    - Validation and repair
 
     Args:
         text: Input text to rewrite.
-        target_platforms: List of platform keys to run.
+        target_platforms: List of platform keys to run (e.g., ['instagram', 'linkedin']).
         tone_map: Optional per-platform tone overrides.
         length_map: Optional per-platform length prefs.
-        top_k: Number of examples to retrieve (passed to platform agent).
+        top_k: Number of examples to retrieve for each platform.
 
     Returns:
-        A list of per-platform output dicts produced by `rewrite_for_platform`.
+        A list of per-platform output dicts, each containing:
+        - platform: Platform identifier
+        - rewritten_text: Final rewritten text
+        - explanation: LLM explanation
+        - examples_used: Retrieved examples
+        - validation: Validation results
+        - entities: Extracted entities
     """
     tone_map = tone_map or {}
     length_map = length_map or {}

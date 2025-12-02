@@ -1,9 +1,4 @@
-"""Orchestration layer to run per-platform rewrites in parallel using LangGraph
-
-This implementation uses the `StateGraph` API: each platform gets its own
-LangChain chain that is executed in parallel. The graph orchestrates these
-chains, with each node creating and invoking a platform-specific chain.
-"""
+"""LangGraph orchestration for parallel platform-specific rewrites."""
 
 from __future__ import annotations
 
@@ -40,19 +35,13 @@ class Context(TypedDict, total=False):
 
 
 def _make_platform_node(platform: str):
-    """Create a LangGraph node that executes a platform-specific LangChain chain.
-    
-    Each platform gets its own chain that handles:
-    - Text sanitization and entity extraction
-    - Example retrieval
-    - LLM-based rewriting with KG context (audience, intent, category)
-    - Validation and repair
+    """Create LangGraph node that executes platform-specific chain.
     
     Args:
-        platform: Platform identifier (e.g., 'instagram', 'linkedin')
+        platform: Platform identifier
         
     Returns:
-        A LangGraph node function that executes the platform chain.
+        LangGraph node function
     """
     def node(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
         ctx = getattr(runtime, "context", None) or {}
@@ -94,30 +83,20 @@ def run_parallel_rewrites(
     length_map: Optional[Dict[str, int]] = None,
     top_k: int = 3,
 ) -> List[Dict[str, Any]]:
-    """Run rewrites for multiple platforms using LangGraph to orchestrate platform chains.
-
-    Each platform gets its own LangChain chain that is executed in parallel via LangGraph.
-    The chains leverage Neo4j knowledge graph context (audience, intent, category) to provide
-    enhanced, context-aware rewrites.
-
+    """Run parallel rewrites for multiple platforms using LangGraph.
+    
     Args:
-        text: Input text to rewrite.
-        target_platforms: List of platform keys to run (e.g., ['instagram', 'linkedin']).
-        audience: Optional target audience segment (e.g., 'gen-z', 'b2b professionals').
-        user_intent: Optional user intent/funnel stage (e.g., 'awareness', 'purchase').
-        product_category: Optional product category (e.g., 'tech', 'fashion', 'b2b').
-        tone_map: Optional per-platform tone/style overrides.
-        length_map: Optional per-platform length prefs.
-        top_k: Number of examples to retrieve for each platform.
-
+        text: Input text to rewrite
+        target_platforms: List of platform keys
+        audience: Optional target audience
+        user_intent: Optional user intent
+        product_category: Optional product category
+        tone_map: Optional per-platform tone overrides
+        length_map: Optional per-platform length overrides
+        top_k: Number of examples to retrieve
+        
     Returns:
-        A list of per-platform output dicts, each containing:
-        - platform: Platform identifier
-        - rewritten_text: Final rewritten text (optimized for audience/intent/category)
-        - explanation: LLM explanation
-        - examples_used: Retrieved examples
-        - validation: Validation results
-        - entities: Extracted entities
+        List of per-platform output dicts with rewritten_text, explanation, validation, etc.
     """
     tone_map = tone_map or {}
     length_map = length_map or {}

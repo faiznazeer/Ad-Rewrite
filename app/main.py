@@ -1,4 +1,4 @@
-"""FastAPI application exposing the ad-rewriter endpoints with Neo4j knowledge graph integration."""
+"""FastAPI endpoints for ad rewriting agent."""
 
 from __future__ import annotations
 
@@ -49,11 +49,7 @@ def health() -> Dict[str, str]:
 
 @app.post("/run-agent")
 def run_agent(req: RunAgentRequest):
-	"""Enhanced ad rewriting endpoint with Neo4j knowledge graph integration.
-	
-	Uses audience, intent, and product category to provide context-aware rewrites
-	with strategy recommendations and platform suggestions.
-	"""
+	"""Ad rewriting endpoint with Neo4j KG integration and strategy insights."""
 	if not req.target_platforms:
 		raise HTTPException(status_code=400, detail="target_platforms is required")
 	
@@ -111,16 +107,11 @@ def run_agent(req: RunAgentRequest):
 	if req.include_strategy_insights:
 		strategy_insights = {}
 		
-		# Reuse strategy data from results instead of re-querying (performance optimization)
-		# Build a map of platform -> result for easy lookup
 		results_by_platform = {r.get("platform"): r for r in results if r.get("platform")}
 		
 		for platform in req.target_platforms:
-			# Try to get strategy data from results first (already fetched during rewrite)
 			result = results_by_platform.get(platform)
 			strategy = result.get("strategy_data", {}) if result else {}
-			
-			# If strategy data not in results (shouldn't happen, but fallback), skip this platform
 			if not strategy:
 				continue
 			
@@ -130,15 +121,10 @@ def run_agent(req: RunAgentRequest):
 				"target_audiences": strategy.get("target_audiences", [])[:5],
 			}
 			
-			# Add audience-specific styles if audience provided
 			if req.audience and "audience_preferred_styles" in strategy:
 				strategy_insights[platform]["audience_preferred_styles"] = strategy["audience_preferred_styles"]
-			
-			# Add intent-specific styles if intent provided
 			if req.user_intent and "intent_required_styles" in strategy:
 				strategy_insights[platform]["intent_required_styles"] = strategy["intent_required_styles"]
-			
-			# Add category suitability if category provided
 			if req.product_category and "category_suitability_score" in strategy:
 				strategy_insights[platform]["category_suitability_score"] = strategy["category_suitability_score"]
 		
@@ -160,5 +146,5 @@ def run_agent(req: RunAgentRequest):
 
 @app.post("/run-agent/fallback")
 def run_agent_fallback(req: RunAgentRequest):
-	# For now, alias to the main endpoint — could implement single-prompt fallback mode.
+	"""Fallback endpoint (currently aliases main endpoint)."""
 	return run_agent(req)

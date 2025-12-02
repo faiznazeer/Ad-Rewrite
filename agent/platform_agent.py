@@ -1,9 +1,4 @@
-"""Core per-platform rewriting agent with retrieval, Neo4j KG constraints, and validation.
-
-This module uses a Neo4j knowledge graph to retrieve platform constraints, preferred styles,
-and other domain knowledge for ad rewriting. All platform rules and relationships are stored
-in Neo4j and queried dynamically.
-"""
+"""Per-platform rewriting agent with Neo4j KG integration, vector retrieval, and validation."""
 
 from __future__ import annotations
 
@@ -27,7 +22,6 @@ from langchain_chroma import Chroma
 from agent.kg_service import (
     get_default_constraints,
     get_platform_data_batch_cached,
-    get_platform_strategy,
     get_recommended_styles,
     platform_exists,
 )
@@ -192,15 +186,15 @@ def execute_llm_chain(input_text: str, platform: str, tone: str, entities: Dict[
 
 
 def validate_text(text: str, platform: str, constraints: Dict[str, Any]) -> Dict[str, Any]:
-    """Validate text against platform constraints from Neo4j knowledge graph.
+    """Validate text against platform constraints.
     
     Args:
         text: Text to validate
         platform: Platform name
-        constraints: Dictionary of constraints from Neo4j (e.g., max_length_chars, allow_emojis, cta_required)
+        constraints: Dict with max_length_chars, allow_emojis, cta_required
         
     Returns:
-        Dictionary with validation results including issues and repaired text
+        Dict with ok, issues, repaired_text
     """
     issues = []
     repaired = text
@@ -240,32 +234,25 @@ def create_platform_chain(
     product_category: Optional[str] = None,
     top_k: int = 3,
 ):
-    """Create a LangChain Runnable chain for a specific platform with KG context.
+    """Create LangChain Runnable chain for platform-specific rewriting.
     
-    The chain processes input text through:
-    1. Sanitization and entity extraction
-    2. Example retrieval from vector store
-    3. LLM rewriting with platform constraints and KG-derived strategy from Neo4j
-    4. Validation and repair using KG constraints
+    Chain: sanitize → retrieve examples → LLM rewrite → validate & repair
     
     Args:
-        platform: Platform identifier (e.g., 'instagram', 'linkedin')
+        platform: Platform identifier
         tone: Optional tone/style override
-        length_pref: Optional length preference override
-        audience: Optional target audience segment (enhances style selection)
-        user_intent: Optional user intent (enhances style requirements)
-        product_category: Optional product category (provides category-specific insights)
+        length_pref: Optional max length override
+        audience: Optional target audience
+        user_intent: Optional user intent
+        product_category: Optional product category
         top_k: Number of examples to retrieve
         
     Returns:
-        A LangChain Runnable chain that takes text input and returns platform-specific rewrite result.
+        LangChain Runnable chain
     """
-    # Get platform constraints from Neo4j knowledge graph
-    # First check if platform exists
     if not platform_exists(platform):
         raise ValueError(f"Unsupported platform {platform} - platform not found in knowledge graph")
     
-    # Get all platform data in a single optimized batched query (replaces 8-11 separate queries)
     strategy = get_platform_data_batch_cached(
         platform=platform,
         audience=audience,
@@ -273,29 +260,17 @@ def create_platform_chain(
         product_category=product_category,
     )
     
-    # Extract constraints from strategy
-    constraints = strategy.get("constraints", {})
-    if not constraints:
-        # Platform exists but has no constraints - use defaults
-        constraints = get_default_constraints(platform)
+    constraints = strategy.get("constraints", {}) or get_default_constraints(platform)
     
-    # Apply length preference override if provided
     if length_pref and "max_length_chars" in constraints:
         constraints["max_length_chars"] = min(length_pref, constraints["max_length_chars"])
     
-    # Get intelligent style recommendations using KG context
-    # This combines platform preferences + audience preferences + intent requirements
-    recommended_styles = get_recommended_styles(
-        platform=platform,
-        audience=audience,
-        intent=user_intent,
-    )
+    recommended_styles = get_recommended_styles(platform=platform, audience=audience, intent=user_intent)
     
-    # Use provided tone, or get intelligent default from KG
     if tone:
         final_tone = tone
     elif recommended_styles:
-        final_tone = recommended_styles[0]  # Use top recommended style
+        final_tone = recommended_styles[0]
     else:
         preferred_styles = strategy.get("preferred_styles", [])
         final_tone = preferred_styles[0] if preferred_styles else "casual"
@@ -303,31 +278,27 @@ def create_platform_chain(
     llm = get_llm()
     
     def prepare_context(input_dict: Dict[str, Any]) -> Dict[str, Any]:
-        """Prepare context for the LLM chain: sanitize, extract entities, retrieve examples, and add KG strategy."""
+        """Prepare context: sanitize, extract entities, retrieve examples, build strategy context."""
         text = input_dict["text"]
         sanitized_text, sanitize_issues = sanitize_text(text)
         entities = extract_entities(sanitized_text)
         examples = retrieve_examples(sanitized_text, platform, k=top_k)
         
-        # Build strategy context from KG insights
         strategy_context = {
             "recommended_styles": recommended_styles[:5],
             "recommended_creative_types": strategy.get("recommended_creative_types", [])[:5],
         }
         
-        # Add audience-specific insights if available
         if audience:
             strategy_context["audience"] = audience
             if "audience_preferred_styles" in strategy:
                 strategy_context["audience_preferred_styles"] = strategy["audience_preferred_styles"]
         
-        # Add intent-specific insights if available
         if user_intent:
             strategy_context["user_intent"] = user_intent
             if "intent_required_styles" in strategy:
                 strategy_context["intent_required_styles"] = strategy["intent_required_styles"]
         
-        # Add category insights if available
         if product_category:
             strategy_context["product_category"] = product_category
             if "category_suitability_score" in strategy:
@@ -344,8 +315,8 @@ def create_platform_chain(
             "sanitize_issues": sanitize_issues,
             "original_entities": entities,
             "examples_used": examples,
-            "constraints_dict": constraints,  # Pass constraints dict for validation
-            "strategy_data": strategy,  # Pass full strategy data for reuse in main.py
+            "constraints_dict": constraints,
+            "strategy_data": strategy,
         }
     
     def parse_llm_response(input_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -376,9 +347,8 @@ def create_platform_chain(
         }
     
     def validate_and_finalize(input_dict: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate and repair the rewritten text, then format final result."""
+        """Validate and repair rewritten text, format final result."""
         rewritten_text = input_dict["rewritten_text"]
-        # Get constraints from context (passed through from prepare_context)
         constraints_for_validation = input_dict.get("constraints_dict", constraints)
         validation = validate_text(rewritten_text, platform, constraints_for_validation)
         result_text = validation["repaired_text"]
@@ -392,11 +362,9 @@ def create_platform_chain(
             "examples_used": input_dict["examples_used"],
             "validation": validation,
             "entities": input_dict["original_entities"],
-            "strategy_data": input_dict.get("strategy_data", {}),  # Include strategy data for reuse in main.py
+            "strategy_data": input_dict.get("strategy_data", {}),
         }
     
-    # Build the chain: prepare context -> prompt -> llm -> parse -> validate
-    # Use RunnablePassthrough to merge the LLM result with the context
     chain = (
         RunnableLambda(prepare_context)
         | RunnablePassthrough.assign(llm_result=REWRITE_PROMPT | llm)

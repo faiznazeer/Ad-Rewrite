@@ -1,15 +1,10 @@
-"""Neo4j Knowledge Graph service for ad-rewriter domain knowledge.
-
-This module provides functions to query and interact with the Neo4j knowledge graph
-that models platforms, audiences, intents, creative types, content styles, and
-their relationships.
-"""
+"""Neo4j Knowledge Graph service for querying platform constraints, styles, and relationships."""
 
 from __future__ import annotations
 
 import os
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
@@ -174,10 +169,7 @@ def get_platform_data_batch(
     intent: Optional[str] = None,
     product_category: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Get all platform data in a single optimized batched query.
-    
-    This replaces multiple separate queries (8-11 queries) with one batched query,
-    significantly improving performance.
+    """Get all platform data in a single batched query (replaces 8-11 separate queries).
     
     Args:
         platform: Platform name
@@ -186,14 +178,8 @@ def get_platform_data_batch(
         product_category: Optional product category
         
     Returns:
-        Dictionary with all platform strategy data including:
-        - constraints: Platform constraints
-        - preferred_styles: Platform preferred styles
-        - recommended_creative_types: Creative types supported
-        - target_audiences: Target audiences
-        - audience_preferred_styles: Audience-specific styles (if audience provided)
-        - intent_required_styles: Intent-specific styles (if intent provided)
-        - category_suitability_score: Category-platform suitability (if category provided)
+        Dictionary with constraints, preferred_styles, recommended_creative_types,
+        target_audiences, and optional audience/intent/category-specific data.
     """
     query = """
     MATCH (p:Platform {name: $platform})
@@ -333,11 +319,7 @@ def get_platform_data_batch_cached(
     intent: Optional[str] = None,
     product_category: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Get platform data with caching for improved performance.
-    
-    This function wraps get_platform_data_batch with LRU caching.
-    Platform data rarely changes, so caching significantly improves performance.
-    """
+    """Get platform data with LRU caching (128 entries)."""
     return _get_platform_data_batch_cached(
         platform.lower(),
         audience.lower() if audience else None,
@@ -354,8 +336,6 @@ def get_platform_strategy(
 ) -> Dict[str, Any]:
     """Get comprehensive strategy recommendations for a platform.
     
-    This function now uses the optimized batched query internally.
-    
     Args:
         platform: Platform name
         audience: Optional audience segment
@@ -363,14 +343,8 @@ def get_platform_strategy(
         product_category: Optional product category
         
     Returns:
-        Dictionary with strategy recommendations including:
-        - constraints: Platform constraints
-        - preferred_styles: List of content styles
-        - recommended_creative_types: List of creative types
-        - target_audiences: List of audiences
-        - audience_preferred_styles: Audience-specific styles (if audience provided)
-        - intent_required_styles: Intent-specific styles (if intent provided)
-        - category_suitability_score: Category-platform suitability (if category provided)
+        Dictionary with constraints, preferred_styles, recommended_creative_types,
+        target_audiences, and optional audience/intent/category-specific data.
     """
     # Use the optimized batched query instead of multiple separate queries
     return get_platform_data_batch_cached(platform, audience, intent, product_category)

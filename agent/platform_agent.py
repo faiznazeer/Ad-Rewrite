@@ -1,4 +1,9 @@
-"""Core per-platform rewriting agent with retrieval, KG constraints, and validation."""
+"""Core per-platform rewriting agent with retrieval, Neo4j KG constraints, and validation.
+
+This module uses a Neo4j knowledge graph to retrieve platform constraints, preferred styles,
+and other domain knowledge for ad rewriting. All platform rules and relationships are stored
+in Neo4j and queried dynamically.
+"""
 
 from __future__ import annotations
 
@@ -19,18 +24,24 @@ from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 
+from agent.kg_service import (
+    get_default_constraints,
+    get_platform_data_batch_cached,
+    get_platform_strategy,
+    get_recommended_styles,
+    platform_exists,
+)
+
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 EXAMPLES_PATH = DATA_DIR / "examples.json"
-KG_PATH = DATA_DIR / "kg.json"
 DEFAULT_CHROMA_DIR = Path(os.getenv("CHROMA_DIR", BASE_DIR / "chroma_db"))
 CHROMA_COLLECTION = "ad_examples"
 EMBED_MODEL = os.getenv("EMBED_MODEL_NAME", "all-MiniLM-L6-v2")
 LLM_MODEL = os.getenv("LLM_MODEL_NAME", "gpt-5-mini")
 
-_kg_cache: Dict[str, Any] = {}
 _embeddings: Optional[HuggingFaceEmbeddings] = None
 _vectorstore: Optional[Chroma] = None
 _embeddings_lock = threading.Lock()
@@ -42,15 +53,6 @@ DISCOUNT_REGEX = re.compile(r"(?<!\w)(\d{1,2}%|half off|bogo)(?!\w)", re.IGNOREC
 PRODUCT_REGEX = re.compile(r"(?:\bfor\s+)([A-Za-z ]+)")
 # This is a regex pattern that matches any single Unicode character in the range from U+263A (☺) to U+1F645 (🙅‍♂️), which includes a wide set of emoji characters.
 EMOJI_REGEX = re.compile(r"[\u263a-\U0001f645]")
-
-
-def _load_kg() -> Dict[str, Any]:
-    global _kg_cache
-    if _kg_cache:
-        return _kg_cache
-    with open(KG_PATH, "r", encoding="utf-8") as f:
-        _kg_cache = json.load(f)
-    return _kg_cache
 
 
 def _get_embeddings() -> HuggingFaceEmbeddings:
@@ -140,16 +142,22 @@ def get_llm() -> BaseLanguageModel:
 
 REWRITE_PROMPT = PromptTemplate.from_template(
     """
-You rewrite ads for specific platforms.
+You rewrite ads for specific platforms using knowledge graph insights.
 Input JSON:
 {{
   "platform": "{platform}",
   "tone": "{tone}",
   "input_text": "{input_text}",
   "entities": {entities},
-  "kg_rules": {kg_rules},
-  "examples": {examples}
+  "constraints": {constraints},
+  "examples": {examples},
+  "strategy_context": {strategy_context}
 }}
+
+Strategy Context provides:
+- Recommended styles based on platform, audience, and intent
+- Creative type recommendations
+- Audience preferences and intent requirements
 
 Respond only in JSON with keys:
 platform, rewritten_text, explanation
@@ -157,7 +165,8 @@ platform, rewritten_text, explanation
 )
 
 
-def execute_llm_chain(input_text: str, platform: str, tone: str, entities: Dict[str, Optional[str]], kg_rules: Dict[str, Any], examples: List[Dict[str, Any]]) -> Dict[str, Any]:
+def execute_llm_chain(input_text: str, platform: str, tone: str, entities: Dict[str, Optional[str]], constraints: Dict[str, Any], examples: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Execute LLM chain for rewriting (legacy function, kept for backward compatibility)."""
     llm = get_llm()
     chain = REWRITE_PROMPT | llm
     result = chain.invoke(
@@ -166,7 +175,7 @@ def execute_llm_chain(input_text: str, platform: str, tone: str, entities: Dict[
             "tone": tone,
             "input_text": input_text,
             "entities": json.dumps(entities),
-            "kg_rules": json.dumps(kg_rules),
+            "constraints": json.dumps(constraints),
             "examples": json.dumps(examples[:3]),
         }
     )
@@ -182,21 +191,39 @@ def execute_llm_chain(input_text: str, platform: str, tone: str, entities: Dict[
         }
 
 
-def validate_text(text: str, platform: str, kg_rules: Dict[str, Any]) -> Dict[str, Any]:
+def validate_text(text: str, platform: str, constraints: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate text against platform constraints from Neo4j knowledge graph.
+    
+    Args:
+        text: Text to validate
+        platform: Platform name
+        constraints: Dictionary of constraints from Neo4j (e.g., max_length_chars, allow_emojis, cta_required)
+        
+    Returns:
+        Dictionary with validation results including issues and repaired text
+    """
     issues = []
     repaired = text
-    if len(text) > kg_rules["max_length_chars"]:
+    
+    max_length = constraints.get("max_length_chars")
+    if max_length and len(text) > max_length:
         issues.append("MAX_LENGTH_EXCEEDED")
-        repaired = repaired[: kg_rules["max_length_chars"]].rstrip()
-    if not kg_rules["allow_emojis"] and EMOJI_REGEX.search(repaired):
+        repaired = repaired[:max_length].rstrip()
+    
+    allow_emojis = constraints.get("allow_emojis", True)
+    if not allow_emojis and EMOJI_REGEX.search(repaired):
         issues.append("EMOJI_NOT_ALLOWED")
         repaired = EMOJI_REGEX.sub("", repaired)
-    if kg_rules.get("cta_required") and not CTA_REGEX.search(repaired):
+    
+    cta_required = constraints.get("cta_required", False)
+    if cta_required and not CTA_REGEX.search(repaired):
         issues.append("CTA_MISSING")
         repaired = f"{repaired.rstrip(string.punctuation)}. Get yours today."
+    
     profanity_matches = PROFANITY_LIST.intersection({w.lower().strip(string.punctuation) for w in repaired.split()})
     if profanity_matches:
         issues.append("PROFANITY_DETECTED")
+    
     return {
         "ok": not issues,
         "issues": issues,
@@ -208,53 +235,117 @@ def create_platform_chain(
     platform: str,
     tone: Optional[str] = None,
     length_pref: Optional[int] = None,
+    audience: Optional[str] = None,
+    user_intent: Optional[str] = None,
+    product_category: Optional[str] = None,
     top_k: int = 3,
 ):
-    """Create a LangChain Runnable chain for a specific platform.
+    """Create a LangChain Runnable chain for a specific platform with KG context.
     
     The chain processes input text through:
     1. Sanitization and entity extraction
-    2. Example retrieval
-    3. LLM rewriting
-    4. Validation and repair
+    2. Example retrieval from vector store
+    3. LLM rewriting with platform constraints and KG-derived strategy from Neo4j
+    4. Validation and repair using KG constraints
     
     Args:
         platform: Platform identifier (e.g., 'instagram', 'linkedin')
-        tone: Optional tone override
+        tone: Optional tone/style override
         length_pref: Optional length preference override
+        audience: Optional target audience segment (enhances style selection)
+        user_intent: Optional user intent (enhances style requirements)
+        product_category: Optional product category (provides category-specific insights)
         top_k: Number of examples to retrieve
         
     Returns:
         A LangChain Runnable chain that takes text input and returns platform-specific rewrite result.
     """
-    kg = _load_kg()
-    if platform not in kg:
-        raise ValueError(f"Unsupported platform {platform}")
+    # Get platform constraints from Neo4j knowledge graph
+    # First check if platform exists
+    if not platform_exists(platform):
+        raise ValueError(f"Unsupported platform {platform} - platform not found in knowledge graph")
     
-    kg_rules = dict(kg[platform])
-    if length_pref:
-        kg_rules["max_length_chars"] = min(length_pref, kg_rules["max_length_chars"])
-    final_tone = tone or kg_rules["preferred_styles"][0]
+    # Get all platform data in a single optimized batched query (replaces 8-11 separate queries)
+    strategy = get_platform_data_batch_cached(
+        platform=platform,
+        audience=audience,
+        intent=user_intent,
+        product_category=product_category,
+    )
+    
+    # Extract constraints from strategy
+    constraints = strategy.get("constraints", {})
+    if not constraints:
+        # Platform exists but has no constraints - use defaults
+        constraints = get_default_constraints(platform)
+    
+    # Apply length preference override if provided
+    if length_pref and "max_length_chars" in constraints:
+        constraints["max_length_chars"] = min(length_pref, constraints["max_length_chars"])
+    
+    # Get intelligent style recommendations using KG context
+    # This combines platform preferences + audience preferences + intent requirements
+    recommended_styles = get_recommended_styles(
+        platform=platform,
+        audience=audience,
+        intent=user_intent,
+    )
+    
+    # Use provided tone, or get intelligent default from KG
+    if tone:
+        final_tone = tone
+    elif recommended_styles:
+        final_tone = recommended_styles[0]  # Use top recommended style
+    else:
+        preferred_styles = strategy.get("preferred_styles", [])
+        final_tone = preferred_styles[0] if preferred_styles else "casual"
     
     llm = get_llm()
     
     def prepare_context(input_dict: Dict[str, Any]) -> Dict[str, Any]:
-        """Prepare context for the LLM chain: sanitize, extract entities, retrieve examples."""
+        """Prepare context for the LLM chain: sanitize, extract entities, retrieve examples, and add KG strategy."""
         text = input_dict["text"]
         sanitized_text, sanitize_issues = sanitize_text(text)
         entities = extract_entities(sanitized_text)
         examples = retrieve_examples(sanitized_text, platform, k=top_k)
+        
+        # Build strategy context from KG insights
+        strategy_context = {
+            "recommended_styles": recommended_styles[:5],
+            "recommended_creative_types": strategy.get("recommended_creative_types", [])[:5],
+        }
+        
+        # Add audience-specific insights if available
+        if audience:
+            strategy_context["audience"] = audience
+            if "audience_preferred_styles" in strategy:
+                strategy_context["audience_preferred_styles"] = strategy["audience_preferred_styles"]
+        
+        # Add intent-specific insights if available
+        if user_intent:
+            strategy_context["user_intent"] = user_intent
+            if "intent_required_styles" in strategy:
+                strategy_context["intent_required_styles"] = strategy["intent_required_styles"]
+        
+        # Add category insights if available
+        if product_category:
+            strategy_context["product_category"] = product_category
+            if "category_suitability_score" in strategy:
+                strategy_context["category_suitability_score"] = strategy["category_suitability_score"]
         
         return {
             "platform": platform,
             "tone": final_tone,
             "input_text": sanitized_text,
             "entities": json.dumps(entities),
-            "kg_rules": json.dumps(kg_rules),
+            "constraints": json.dumps(constraints),
+            "strategy_context": json.dumps(strategy_context),  # Fixed: match prompt template variable name
             "examples": json.dumps(examples[:3]),
             "sanitize_issues": sanitize_issues,
             "original_entities": entities,
             "examples_used": examples,
+            "constraints_dict": constraints,  # Pass constraints dict for validation
+            "strategy_data": strategy,  # Pass full strategy data for reuse in main.py
         }
     
     def parse_llm_response(input_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -287,7 +378,9 @@ def create_platform_chain(
     def validate_and_finalize(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Validate and repair the rewritten text, then format final result."""
         rewritten_text = input_dict["rewritten_text"]
-        validation = validate_text(rewritten_text, platform, kg_rules)
+        # Get constraints from context (passed through from prepare_context)
+        constraints_for_validation = input_dict.get("constraints_dict", constraints)
+        validation = validate_text(rewritten_text, platform, constraints_for_validation)
         result_text = validation["repaired_text"]
         validation.pop("repaired_text")
         validation["issues"].extend(input_dict["sanitize_issues"])
@@ -299,6 +392,7 @@ def create_platform_chain(
             "examples_used": input_dict["examples_used"],
             "validation": validation,
             "entities": input_dict["original_entities"],
+            "strategy_data": input_dict.get("strategy_data", {}),  # Include strategy data for reuse in main.py
         }
     
     # Build the chain: prepare context -> prompt -> llm -> parse -> validate
@@ -318,18 +412,24 @@ def rewrite_for_platform(
     platform: str,
     tone: Optional[str] = None,
     length_pref: Optional[int] = None,
+    audience: Optional[str] = None,
+    user_intent: Optional[str] = None,
+    product_category: Optional[str] = None,
     top_k: int = 3,
 ) -> Dict[str, Any]:
-    """Rewrite text for a specific platform using the platform chain.
+    """Rewrite text for a specific platform using the platform chain with KG context.
     
-    This is a convenience wrapper around create_platform_chain for backward compatibility.
+    This is a convenience wrapper around create_platform_chain.
     For new code, prefer using create_platform_chain directly.
     
     Args:
         text: Input text to rewrite.
         platform: Platform identifier.
-        tone: Optional tone override.
+        tone: Optional tone/style override.
         length_pref: Optional length preference override.
+        audience: Optional target audience segment (enhances style selection).
+        user_intent: Optional user intent (enhances style requirements).
+        product_category: Optional product category (provides category-specific insights).
         top_k: Number of examples to retrieve.
         
     Returns:
@@ -339,6 +439,9 @@ def rewrite_for_platform(
         platform=platform,
         tone=tone,
         length_pref=length_pref,
+        audience=audience,
+        user_intent=user_intent,
+        product_category=product_category,
         top_k=top_k,
     )
     return chain.invoke({"text": text})

@@ -18,9 +18,9 @@ def test_extract_entities_detects_cta_and_discount():
 
 
 def test_validate_trims_and_removes_emojis():
-    kg = {"allow_emojis": False, "max_length_chars": 10, "cta_required": False}
+    constraints = {"allow_emojis": False, "max_length_chars": 10, "cta_required": False}
     text = "Nice deal 😊😊" * 3
-    res = pa.validate_text(text, platform="instagram", kg_rules=kg)
+    res = pa.validate_text(text, platform="instagram", constraints=constraints)
     assert "MAX_LENGTH_EXCEEDED" in res["issues"] or isinstance(res["ok"], bool)
     # ensure emojis removed
     assert not re.search(pa.EMOJI_REGEX, res["repaired_text"]) 

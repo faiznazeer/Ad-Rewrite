@@ -12,3 +12,4 @@ scikit-learn
 rouge-score
 langchain-huggingface
 langchain-chroma
+neo4j

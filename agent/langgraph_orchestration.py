@@ -31,6 +31,9 @@ class State(TypedDict):
 class Context(TypedDict, total=False):
     text: str
     target_platforms: List[str]
+    audience: Optional[str]
+    user_intent: Optional[str]
+    product_category: Optional[str]
     tone_map: Dict[str, str]
     length_map: Dict[str, int]
     top_k: int
@@ -42,7 +45,7 @@ def _make_platform_node(platform: str):
     Each platform gets its own chain that handles:
     - Text sanitization and entity extraction
     - Example retrieval
-    - LLM-based rewriting
+    - LLM-based rewriting with KG context (audience, intent, category)
     - Validation and repair
     
     Args:
@@ -54,15 +57,21 @@ def _make_platform_node(platform: str):
     def node(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
         ctx = getattr(runtime, "context", None) or {}
         text = ctx.get("text")
+        audience = ctx.get("audience")
+        user_intent = ctx.get("user_intent")
+        product_category = ctx.get("product_category")
         tone_map = ctx.get("tone_map") or {}
         length_map = ctx.get("length_map") or {}
         top_k = ctx.get("top_k", 3)
         
-        # Create the platform-specific chain
+        # Create the platform-specific chain with KG context
         chain = create_platform_chain(
             platform=platform,
             tone=tone_map.get(platform),
             length_pref=length_map.get(platform),
+            audience=audience,
+            user_intent=user_intent,
+            product_category=product_category,
             top_k=top_k,
         )
         
@@ -78,6 +87,9 @@ def _make_platform_node(platform: str):
 def run_parallel_rewrites(
     text: str,
     target_platforms: List[str],
+    audience: Optional[str] = None,
+    user_intent: Optional[str] = None,
+    product_category: Optional[str] = None,
     tone_map: Optional[Dict[str, str]] = None,
     length_map: Optional[Dict[str, int]] = None,
     top_k: int = 3,
@@ -85,23 +97,23 @@ def run_parallel_rewrites(
     """Run rewrites for multiple platforms using LangGraph to orchestrate platform chains.
 
     Each platform gets its own LangChain chain that is executed in parallel via LangGraph.
-    The chains handle the complete rewrite pipeline:
-    - Text sanitization and entity extraction
-    - Platform-specific example retrieval
-    - LLM-based rewriting
-    - Validation and repair
+    The chains leverage Neo4j knowledge graph context (audience, intent, category) to provide
+    enhanced, context-aware rewrites.
 
     Args:
         text: Input text to rewrite.
         target_platforms: List of platform keys to run (e.g., ['instagram', 'linkedin']).
-        tone_map: Optional per-platform tone overrides.
+        audience: Optional target audience segment (e.g., 'gen-z', 'b2b professionals').
+        user_intent: Optional user intent/funnel stage (e.g., 'awareness', 'purchase').
+        product_category: Optional product category (e.g., 'tech', 'fashion', 'b2b').
+        tone_map: Optional per-platform tone/style overrides.
         length_map: Optional per-platform length prefs.
         top_k: Number of examples to retrieve for each platform.
 
     Returns:
         A list of per-platform output dicts, each containing:
         - platform: Platform identifier
-        - rewritten_text: Final rewritten text
+        - rewritten_text: Final rewritten text (optimized for audience/intent/category)
         - explanation: LLM explanation
         - examples_used: Retrieved examples
         - validation: Validation results
@@ -126,6 +138,9 @@ def run_parallel_rewrites(
     context: Context = {
         "text": text,
         "target_platforms": target_platforms,
+        "audience": audience,
+        "user_intent": user_intent,
+        "product_category": product_category,
         "tone_map": tone_map,
         "length_map": length_map,
         "top_k": top_k,

@@ -1,4 +1,4 @@
-"""Per-platform rewriting agent with Neo4j KG integration, vector retrieval, and validation."""
+"""Per-platform rewriting agent with Neo4j KG integration and vector retrieval."""
 
 from __future__ import annotations
 
@@ -6,10 +6,9 @@ import json
 import os
 import re
 import shutil
-import string
 import threading
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from langchain_core.prompts import PromptTemplate
@@ -20,7 +19,6 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 
 from agent.kg_service import (
-    get_default_constraints,
     get_platform_data_batch_cached,
     get_recommended_styles,
     platform_exists,
@@ -41,13 +39,6 @@ _vectorstore: Optional[Chroma] = None
 _embeddings_lock = threading.Lock()
 _vectorstore_lock = threading.Lock()
 
-PROFANITY_LIST = {"damn", "hell", "shit"}
-CTA_REGEX = re.compile(r"\b(buy|shop|order|get|book|reserve|save|claim)\b", re.IGNORECASE)
-DISCOUNT_REGEX = re.compile(r"(?<!\w)(\d{1,2}%|half off|bogo)(?!\w)", re.IGNORECASE)
-PRODUCT_REGEX = re.compile(r"(?:\bfor\s+)([A-Za-z ]+)")
-# This is a regex pattern that matches any single Unicode character in the range from U+263A (☺) to U+1F645 (🙅‍♂️), which includes a wide set of emoji characters.
-EMOJI_REGEX = re.compile(r"[\u263a-\U0001f645]")
-
 
 def _get_embeddings() -> HuggingFaceEmbeddings:
     global _embeddings
@@ -59,20 +50,16 @@ def _get_embeddings() -> HuggingFaceEmbeddings:
     return _embeddings
 
 
-def ensure_vectorstore_ready() -> None:
-    if not DEFAULT_CHROMA_DIR.exists() or not any(DEFAULT_CHROMA_DIR.iterdir()):
-        raise RuntimeError(
-            f"Chroma store missing at {DEFAULT_CHROMA_DIR}. Run `python -m agent.platform_agent --ingest` first."
-        )
-
-
 def _get_vectorstore() -> Chroma:
     global _vectorstore
     if _vectorstore is None:
         with _vectorstore_lock:
             # Double-check pattern to avoid race condition
             if _vectorstore is None:
-                ensure_vectorstore_ready()
+                if not DEFAULT_CHROMA_DIR.exists() or not any(DEFAULT_CHROMA_DIR.iterdir()):
+                    raise RuntimeError(
+                        f"Chroma store missing at {DEFAULT_CHROMA_DIR}. Run `python -m agent.platform_agent --ingest` first."
+                    )
                 _vectorstore = Chroma(
                     collection_name=CHROMA_COLLECTION,
                     persist_directory=str(DEFAULT_CHROMA_DIR),
@@ -99,27 +86,6 @@ def ingest_examples() -> None:
     vectorstore.add_texts(texts=texts, metadatas=metadatas, ids=ids)
 
 
-def sanitize_text(text: str) -> Tuple[str, List[str]]:
-    issues = []
-    sanitized = text.strip()
-    words = sanitized.split()
-    for idx, word in enumerate(words):
-        clean = word.strip(string.punctuation).lower()
-        if clean in PROFANITY_LIST:
-            issues.append("PROFANITY_MASKED")
-            words[idx] = word[0] + "*" * max(len(word) - 1, 1)
-    sanitized = " ".join(words)
-    return sanitized, issues
-
-
-def extract_entities(text: str) -> Dict[str, Optional[str]]:
-    return {
-        "cta": CTA_REGEX.search(text).group(0) if CTA_REGEX.search(text) else None,
-        "discount": DISCOUNT_REGEX.search(text).group(0) if DISCOUNT_REGEX.search(text) else None,
-        "product": PRODUCT_REGEX.search(text).group(1).strip() if PRODUCT_REGEX.search(text) else None,
-    }
-
-
 def retrieve_examples(query: str, platform: str, k: int = 3) -> List[Dict[str, Any]]:
     vectorstore = _get_vectorstore()
     docs = vectorstore.similarity_search(
@@ -142,8 +108,6 @@ Input JSON:
   "platform": "{platform}",
   "tone": "{tone}",
   "input_text": "{input_text}",
-  "entities": {entities},
-  "constraints": {constraints},
   "examples": {examples},
   "strategy_context": {strategy_context}
 }}
@@ -159,7 +123,7 @@ platform, rewritten_text, explanation
 )
 
 
-def execute_llm_chain(input_text: str, platform: str, tone: str, entities: Dict[str, Optional[str]], constraints: Dict[str, Any], examples: List[Dict[str, Any]]) -> Dict[str, Any]:
+def execute_llm_chain(input_text: str, platform: str, tone: str, examples: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Execute LLM chain for rewriting (legacy function, kept for backward compatibility)."""
     llm = get_llm()
     chain = REWRITE_PROMPT | llm
@@ -168,12 +132,9 @@ def execute_llm_chain(input_text: str, platform: str, tone: str, entities: Dict[
             "platform": platform,
             "tone": tone,
             "input_text": input_text,
-            "entities": json.dumps(entities),
-            "constraints": json.dumps(constraints),
             "examples": json.dumps(examples[:3]),
         }
     )
-    # Newer LangChain chat models return a BaseMessage; fall back to string if needed.
     response = getattr(result, "content", str(result))
     try:
         return json.loads(response)
@@ -185,50 +146,9 @@ def execute_llm_chain(input_text: str, platform: str, tone: str, entities: Dict[
         }
 
 
-def validate_text(text: str, platform: str, constraints: Dict[str, Any]) -> Dict[str, Any]:
-    """Validate text against platform constraints.
-    
-    Args:
-        text: Text to validate
-        platform: Platform name
-        constraints: Dict with max_length_chars, allow_emojis, cta_required
-        
-    Returns:
-        Dict with ok, issues, repaired_text
-    """
-    issues = []
-    repaired = text
-    
-    max_length = constraints.get("max_length_chars")
-    if max_length and len(text) > max_length:
-        issues.append("MAX_LENGTH_EXCEEDED")
-        repaired = repaired[:max_length].rstrip()
-    
-    allow_emojis = constraints.get("allow_emojis", True)
-    if not allow_emojis and EMOJI_REGEX.search(repaired):
-        issues.append("EMOJI_NOT_ALLOWED")
-        repaired = EMOJI_REGEX.sub("", repaired)
-    
-    cta_required = constraints.get("cta_required", False)
-    if cta_required and not CTA_REGEX.search(repaired):
-        issues.append("CTA_MISSING")
-        repaired = f"{repaired.rstrip(string.punctuation)}. Get yours today."
-    
-    profanity_matches = PROFANITY_LIST.intersection({w.lower().strip(string.punctuation) for w in repaired.split()})
-    if profanity_matches:
-        issues.append("PROFANITY_DETECTED")
-    
-    return {
-        "ok": not issues,
-        "issues": issues,
-        "repaired_text": repaired,
-    }
-
-
 def create_platform_chain(
     platform: str,
     tone: Optional[str] = None,
-    length_pref: Optional[int] = None,
     audience: Optional[str] = None,
     user_intent: Optional[str] = None,
     product_category: Optional[str] = None,
@@ -236,12 +156,11 @@ def create_platform_chain(
 ):
     """Create LangChain Runnable chain for platform-specific rewriting.
     
-    Chain: sanitize → retrieve examples → LLM rewrite → validate & repair
+    Chain: retrieve examples → LLM rewrite
     
     Args:
         platform: Platform identifier
         tone: Optional tone/style override
-        length_pref: Optional max length override
         audience: Optional target audience
         user_intent: Optional user intent
         product_category: Optional product category
@@ -260,11 +179,6 @@ def create_platform_chain(
         product_category=product_category,
     )
     
-    constraints = strategy.get("constraints", {}) or get_default_constraints(platform)
-    
-    if length_pref and "max_length_chars" in constraints:
-        constraints["max_length_chars"] = min(length_pref, constraints["max_length_chars"])
-    
     recommended_styles = get_recommended_styles(platform=platform, audience=audience, intent=user_intent)
     
     if tone:
@@ -278,11 +192,9 @@ def create_platform_chain(
     llm = get_llm()
     
     def prepare_context(input_dict: Dict[str, Any]) -> Dict[str, Any]:
-        """Prepare context: sanitize, extract entities, retrieve examples, build strategy context."""
-        text = input_dict["text"]
-        sanitized_text, sanitize_issues = sanitize_text(text)
-        entities = extract_entities(sanitized_text)
-        examples = retrieve_examples(sanitized_text, platform, k=top_k)
+        """Prepare context: retrieve examples, build strategy context."""
+        text = input_dict["text"].strip()
+        examples = retrieve_examples(text, platform, k=top_k)
         
         strategy_context = {
             "recommended_styles": recommended_styles[:5],
@@ -307,15 +219,10 @@ def create_platform_chain(
         return {
             "platform": platform,
             "tone": final_tone,
-            "input_text": sanitized_text,
-            "entities": json.dumps(entities),
-            "constraints": json.dumps(constraints),
-            "strategy_context": json.dumps(strategy_context),  # Fixed: match prompt template variable name
+            "input_text": text,
+            "strategy_context": json.dumps(strategy_context),
             "examples": json.dumps(examples[:3]),
-            "sanitize_issues": sanitize_issues,
-            "original_entities": entities,
             "examples_used": examples,
-            "constraints_dict": constraints,
             "strategy_data": strategy,
         }
     
@@ -346,22 +253,13 @@ def create_platform_chain(
             "rewritten_text": rewritten_text,
         }
     
-    def validate_and_finalize(input_dict: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate and repair rewritten text, format final result."""
-        rewritten_text = input_dict["rewritten_text"]
-        constraints_for_validation = input_dict.get("constraints_dict", constraints)
-        validation = validate_text(rewritten_text, platform, constraints_for_validation)
-        result_text = validation["repaired_text"]
-        validation.pop("repaired_text")
-        validation["issues"].extend(input_dict["sanitize_issues"])
-        
+    def finalize(input_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Format final result."""
         return {
             "platform": platform,
-            "rewritten_text": result_text,
+            "rewritten_text": input_dict["rewritten_text"],
             "explanation": input_dict["llm_output"].get("explanation", ""),
             "examples_used": input_dict["examples_used"],
-            "validation": validation,
-            "entities": input_dict["original_entities"],
             "strategy_data": input_dict.get("strategy_data", {}),
         }
     
@@ -369,7 +267,7 @@ def create_platform_chain(
         RunnableLambda(prepare_context)
         | RunnablePassthrough.assign(llm_result=REWRITE_PROMPT | llm)
         | RunnableLambda(parse_llm_response)
-        | RunnableLambda(validate_and_finalize)
+        | RunnableLambda(finalize)
     )
     
     return chain
@@ -379,7 +277,6 @@ def rewrite_for_platform(
     text: str,
     platform: str,
     tone: Optional[str] = None,
-    length_pref: Optional[int] = None,
     audience: Optional[str] = None,
     user_intent: Optional[str] = None,
     product_category: Optional[str] = None,
@@ -394,7 +291,6 @@ def rewrite_for_platform(
         text: Input text to rewrite.
         platform: Platform identifier.
         tone: Optional tone/style override.
-        length_pref: Optional length preference override.
         audience: Optional target audience segment (enhances style selection).
         user_intent: Optional user intent (enhances style requirements).
         product_category: Optional product category (provides category-specific insights).
@@ -406,7 +302,6 @@ def rewrite_for_platform(
     chain = create_platform_chain(
         platform=platform,
         tone=tone,
-        length_pref=length_pref,
         audience=audience,
         user_intent=user_intent,
         product_category=product_category,

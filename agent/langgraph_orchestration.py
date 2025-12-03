@@ -12,10 +12,10 @@ from langgraph.runtime import Runtime
 
 
 def _results_reducer(a: List[Any], b: Any) -> List[Any]:
-    if a is None:
-        a = []
-    if b is None:
+    if b is not None or isinstance(b, list):
         return a
+    if not isinstance(b, dict):
+        raise TypeError(f"Expected dict from node, got {type(b).__name__}: {b}")
     return a + [b]
 
 
@@ -30,7 +30,6 @@ class Context(TypedDict, total=False):
     user_intent: Optional[str]
     product_category: Optional[str]
     tone_map: Dict[str, str]
-    length_map: Dict[str, int]
     top_k: int
 
 
@@ -50,14 +49,11 @@ def _make_platform_node(platform: str):
         user_intent = ctx.get("user_intent")
         product_category = ctx.get("product_category")
         tone_map = ctx.get("tone_map") or {}
-        length_map = ctx.get("length_map") or {}
         top_k = ctx.get("top_k", 3)
         
-        # Create the platform-specific chain with KG context
         chain = create_platform_chain(
             platform=platform,
             tone=tone_map.get(platform),
-            length_pref=length_map.get(platform),
             audience=audience,
             user_intent=user_intent,
             product_category=product_category,
@@ -80,7 +76,6 @@ def run_parallel_rewrites(
     user_intent: Optional[str] = None,
     product_category: Optional[str] = None,
     tone_map: Optional[Dict[str, str]] = None,
-    length_map: Optional[Dict[str, int]] = None,
     top_k: int = 3,
 ) -> List[Dict[str, Any]]:
     """Run parallel rewrites for multiple platforms using LangGraph.
@@ -88,22 +83,19 @@ def run_parallel_rewrites(
     Args:
         text: Input text to rewrite
         target_platforms: List of platform keys
-        audience: Optional target audience
-        user_intent: Optional user intent
-        product_category: Optional product category
-        tone_map: Optional per-platform tone overrides
-        length_map: Optional per-platform length overrides
+        audience: (Optional) target audience
+        user_intent: (Optional) user intent
+        product_category: (Optional) product category
+        tone_map: (Optional) per-platform tone overrides
         top_k: Number of examples to retrieve
         
     Returns:
-        List of per-platform output dicts with rewritten_text, explanation, validation, etc.
+        List of per-platform output dicts with rewritten_text, explanation, etc.
     """
     tone_map = tone_map or {}
-    length_map = length_map or {}
 
     graph = StateGraph(state_schema=State, context_schema=Context)
 
-    # add nodes and edges
     for p in target_platforms:
         node = _make_platform_node(p)
         graph.add_node(f"run_{p}", node)
@@ -121,19 +113,18 @@ def run_parallel_rewrites(
         "user_intent": user_intent,
         "product_category": product_category,
         "tone_map": tone_map,
-        "length_map": length_map,
         "top_k": top_k,
     }
 
-    out = compiled.invoke(init_state, context=context, stream_mode="values")
-    # compiled.invoke with stream_mode="values" should return the latest state dict
-    if isinstance(out, dict):
-        return out.get("results", [])
-    # fallback: if a list of chunks is returned, try to find a dict with 'results'
-    if isinstance(out, list):
-        for chunk in out[::-1]:
-            if isinstance(chunk, dict) and "results" in chunk:
-                return chunk.get("results", [])
+    # Invoke without stream_mode to get final state directly
+    final_state = compiled.invoke(init_state, context=context)
+    
+    # Extract results from final state
+    if isinstance(final_state, dict) and "results" in final_state:
+        results = final_state["results"]
+        # Ensure results is a list of dicts
+        if isinstance(results, list):
+            return results
     return []
 
 

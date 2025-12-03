@@ -9,43 +9,23 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from agent.langgraph_orchestration import run_parallel_rewrites
-from agent.kg_service import get_similar_platforms
 
 
 class RunAgentRequest(BaseModel):
 	text: str = Field(..., description="Input text to rewrite")
 	target_platforms: List[str] = Field(..., description="List of target platforms (e.g., ['instagram', 'linkedin'])")
-	
-	# Knowledge graph context fields for enhanced rewrites
-	audience: Optional[str] = Field(
-		None, 
-		description="Target audience segment (e.g., 'gen-z', 'millennials', 'b2b professionals', 'parents')"
-	)
-	user_intent: Optional[str] = Field(
-		None,
-		description="User intent/funnel stage (e.g., 'awareness', 'consideration', 'purchase', 'engagement')"
-	)
-	product_category: Optional[str] = Field(
-		None,
-		description="Product category (e.g., 'tech', 'fashion', 'food', 'b2b', 'services')"
-	)
-	
-	# Optional overrides
+	audience: Optional[str] = Field(None, description="Target audience segment (e.g., 'gen-z', 'millennials', 'b2b professionals', 'parents')")
+	user_intent: Optional[str] = Field(None, description="User intent/funnel stage (e.g., 'awareness', 'consideration', 'purchase', 'engagement')")
+	product_category: Optional[str] = Field(None, description="Product category (e.g., 'tech', 'fashion', 'food', 'b2b', 'services')")
 	tone_map: Optional[Dict[str, str]] = Field(None, description="Optional per-platform tone/style overrides")
-	length_prefs: Optional[Dict[str, int]] = Field(None, description="Optional per-platform max length overrides")
-	
-	# Strategy options
 	include_strategy_insights: bool = Field(True, description="Include KG-based strategy recommendations in response")
-	suggest_alternative_platforms: bool = Field(True, description="Suggest alternative platforms based on audience overlap")
 
 
 app = FastAPI(title="Ad Rewriter Agent")
 
-
 @app.get("/")
 def health() -> Dict[str, str]:
 	return {"status": "ok", "service": "ad-rewriter"}
-
 
 @app.post("/run-agent")
 def run_agent(req: RunAgentRequest):
@@ -55,7 +35,6 @@ def run_agent(req: RunAgentRequest):
 	
 	start = time.monotonic()
 	
-	# Run parallel rewrites with KG context
 	results = run_parallel_rewrites(
 		text=req.text,
 		target_platforms=req.target_platforms,
@@ -63,32 +42,10 @@ def run_agent(req: RunAgentRequest):
 		user_intent=req.user_intent,
 		product_category=req.product_category,
 		tone_map=req.tone_map,
-		length_map=req.length_prefs,
 	)
 	
 	latency_ms = int((time.monotonic() - start) * 1000)
-	
-	# Normalize results to a flat list of dicts
-	normalized: list[dict] = []
-	for r in results:
-		if isinstance(r, dict):
-			normalized.append(r)
-		elif isinstance(r, list):
-			for item in r:
-				if isinstance(item, dict):
-					normalized.append(item)
-	results = normalized
 
-	# Validation summary
-	validation_summary = {"total": len(results), "ok": 0, "failed": 0}
-	for r in results:
-		v = r.get("validation")
-		if v and v.get("ok"):
-			validation_summary["ok"] += 1
-		else:
-			validation_summary["failed"] += 1
-
-	# Build response with strategy insights
 	response = {
 		"meta": {
 			"latency_ms": latency_ms,
@@ -99,7 +56,6 @@ def run_agent(req: RunAgentRequest):
 				"product_category": req.product_category,
 			},
 		},
-		"validation_summary": validation_summary,
 		"results": results,
 	}
 	
@@ -130,21 +86,5 @@ def run_agent(req: RunAgentRequest):
 		
 		if strategy_insights:
 			response["strategy_insights"] = strategy_insights
-		
-		# Suggest alternative platforms if requested
-		if req.suggest_alternative_platforms:
-			alternative_platforms = {}
-			for platform in req.target_platforms:
-				similar = get_similar_platforms(platform, limit=3)
-				if similar:
-					alternative_platforms[platform] = similar
-			if alternative_platforms:
-				response["alternative_platforms"] = alternative_platforms
 
 	return response
-
-
-@app.post("/run-agent/fallback")
-def run_agent_fallback(req: RunAgentRequest):
-	"""Fallback endpoint (currently aliases main endpoint)."""
-	return run_agent(req)

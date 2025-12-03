@@ -13,7 +13,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from agent.kg_service import execute_query, verify_connection, get_platform_constraints, get_platform_strategy
+from agent.kg_service import execute_query, verify_connection, get_platform_data_batch_cached
 
 
 def print_section(title: str):
@@ -79,7 +79,8 @@ def test_platform_constraints():
     platforms = ["instagram", "linkedin", "tiktok", "facebook", "google"]
     
     for platform in platforms:
-        constraints = get_platform_constraints(platform)
+        strategy = get_platform_data_batch_cached(platform)
+        constraints = strategy.get("constraints", {})
         if constraints:
             print(f"\n  {platform.upper()}:")
             for key, value in constraints.items():
@@ -273,14 +274,15 @@ def test_kg_service_functions():
     """Test kg_service.py functions."""
     print_section("Testing kg_service.py Functions")
     
-    # Test get_platform_constraints
-    print("\n  1. get_platform_constraints('instagram'):")
-    constraints = get_platform_constraints("instagram")
+    # Test get_platform_data_batch_cached (constraints)
+    print("\n  1. get_platform_data_batch_cached('instagram') - constraints:")
+    strategy = get_platform_data_batch_cached("instagram")
+    constraints = strategy.get("constraints", {})
     print(f"     {constraints}")
     
-    # Test get_platform_strategy
-    print("\n  2. get_platform_strategy('linkedin', audience='b2b professionals', intent='purchase'):")
-    strategy = get_platform_strategy(
+    # Test get_platform_data_batch_cached (full strategy)
+    print("\n  2. get_platform_data_batch_cached('linkedin', audience='b2b professionals', intent='purchase'):")
+    strategy = get_platform_data_batch_cached(
         platform="linkedin",
         audience="b2b professionals",
         intent="purchase",

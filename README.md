@@ -19,18 +19,18 @@ The Ad Rewriter Agent takes input text and rewrites it for multiple platforms (I
 └──────┬──────┘
        │
 ┌──────▼──────────────────┐
-│ LangGraph Orchestrator │
+│ LangGraph Orchestrator  │
 │  (Parallel Execution)   │
 └──────┬──────────────────┘
        │
    ┌───┴───┬─────────┬─────────┐
    │       │         │         │
-┌──▼──┐ ┌─▼──┐   ┌──▼──┐   ┌──▼──┐
-│Insta│ │Link│   │Twit │   │ ... │
+┌──▼──┐ ┌─▼───┐   ┌──▼──┐   ┌──▼──┐
+│Insta│ │FB   │   │Twit │   │ ... │
 │Chain│ │Chain│   │Chain│   │     │
-└──┬──┘ └─┬──┘   └──┬──┘   └──┬──┘
-   │      │         │         │
-   └──────┴─────────┴─────────┘
+└──┬──┘ └─┬───┘   └──┬──┘   └──┬──┘
+   │      │          │         │
+   └──────┴──────────┴─────────┘
          │
     ┌────▼────┐
     │ Neo4j KG│
@@ -213,8 +213,6 @@ ad-rewriter/
 │   └── test_kg_queries.py      # Verify KG setup
 ├── data/
 │   └── examples.json           # Example ad copy
-├── eval/
-│   └── evaluate.py             # Evaluation harness
 └── tests/
     └── test_platform_agent.py  # Unit tests
 ```
@@ -223,12 +221,6 @@ ad-rewriter/
 
 ```bash
 pytest tests/
-```
-
-### Evaluation
-
-```bash
-python eval/evaluate.py  # Generates eval_results.csv
 ```
 
 See `scripts/README.md` for detailed Neo4j setup instructions.

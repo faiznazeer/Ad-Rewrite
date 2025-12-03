@@ -33,14 +33,6 @@ def get_driver() -> GraphDatabase.driver:
     return _driver
 
 
-def close_driver() -> None:
-    """Close Neo4j driver connection."""
-    global _driver
-    if _driver is not None:
-        _driver.close()
-        _driver = None
-
-
 def execute_query(query: str, parameters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """Execute a Cypher query and return results.
     
@@ -262,7 +254,6 @@ def verify_connection() -> bool:
 
 __all__ = [
     "get_driver",
-    "close_driver",
     "execute_query",
     "platform_exists",
     "get_platform_data_batch_cached",

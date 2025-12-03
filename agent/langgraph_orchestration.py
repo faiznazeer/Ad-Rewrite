@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from agent.platform_agent import create_platform_chain
 
 from typing_extensions import Annotated, TypedDict
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import StateGraph, START
 from langgraph.runtime import Runtime
 
 

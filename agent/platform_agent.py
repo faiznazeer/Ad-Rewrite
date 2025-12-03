@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import shutil
 import threading
 from pathlib import Path
@@ -17,6 +16,7 @@ from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
+from pydantic import BaseModel, Field
 
 from agent.kg_service import (
     get_platform_data_batch_cached,
@@ -96,6 +96,13 @@ def retrieve_examples(query: str, platform: str, k: int = 3) -> List[Dict[str, A
     return [{"text": d.page_content, **(d.metadata or {})} for d in docs]
 
 
+class RewriteOutput(BaseModel):
+    """Structured output schema for ad rewrite."""
+    platform: str = Field(description="The platform name")
+    rewritten_text: str = Field(description="The rewritten ad copy for the platform")
+    explanation: str = Field(description="Brief explanation of the rewrite strategy")
+
+
 def get_llm() -> BaseLanguageModel:
     return ChatOpenAI(model=LLM_MODEL, temperature=0.6)
 
@@ -117,33 +124,9 @@ Strategy Context provides:
 - Creative type recommendations
 - Audience preferences and intent requirements
 
-Respond only in JSON with keys:
-platform, rewritten_text, explanation
+Rewrite the ad copy for the specified platform, adapting it to match the platform's style, audience preferences, and intent requirements.
 """
 )
-
-
-def execute_llm_chain(input_text: str, platform: str, tone: str, examples: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Execute LLM chain for rewriting (legacy function, kept for backward compatibility)."""
-    llm = get_llm()
-    chain = REWRITE_PROMPT | llm
-    result = chain.invoke(
-        {
-            "platform": platform,
-            "tone": tone,
-            "input_text": input_text,
-            "examples": json.dumps(examples[:3]),
-        }
-    )
-    response = getattr(result, "content", str(result))
-    try:
-        return json.loads(response)
-    except json.JSONDecodeError:
-        return {
-            "platform": platform,
-            "rewritten_text": response.strip(),
-            "explanation": "Model returned non-JSON, raw text forwarded.",
-        }
 
 
 def create_platform_chain(
@@ -190,6 +173,7 @@ def create_platform_chain(
         final_tone = preferred_styles[0] if preferred_styles else "casual"
     
     llm = get_llm()
+    structured_llm = llm.with_structured_output(RewriteOutput)
     
     def prepare_context(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare context: retrieve examples, build strategy context."""
@@ -227,23 +211,32 @@ def create_platform_chain(
         }
     
     def parse_llm_response(input_dict: Dict[str, Any]) -> Dict[str, Any]:
-        """Parse LLM response and extract rewritten text."""
-        # The LLM result is passed as a message, extract content
+        """Parse structured LLM response and extract rewritten text."""
         llm_result = input_dict.get("llm_result")
-        if llm_result is None:
-            # Fallback if structure is different
-            response = str(input_dict)
-        else:
-            response = getattr(llm_result, "content", str(llm_result))
         
-        try:
-            llm_output = json.loads(response)
-        except json.JSONDecodeError:
+        if llm_result is None:
+            # Fallback: use input text as-is
+            rewritten_text = input_dict.get("input_text", "")
             llm_output = {
                 "platform": platform,
-                "rewritten_text": response.strip(),
-                "explanation": "Model returned non-JSON, raw text forwarded.",
+                "rewritten_text": rewritten_text,
+                "explanation": "No response from LLM, using input text.",
             }
+        else:
+            # Structured output is already a Pydantic model
+            if isinstance(llm_result, RewriteOutput):
+                llm_output = {
+                    "platform": llm_result.platform,
+                    "rewritten_text": llm_result.rewritten_text,
+                    "explanation": llm_result.explanation,
+                }
+            else:
+                # Fallback for unexpected types
+                llm_output = {
+                    "platform": platform,
+                    "rewritten_text": str(llm_result),
+                    "explanation": "Unexpected response format.",
+                }
         
         rewritten_text = llm_output.get("rewritten_text", "").strip() or input_dict.get("input_text", "")
         
@@ -265,7 +258,7 @@ def create_platform_chain(
     
     chain = (
         RunnableLambda(prepare_context)
-        | RunnablePassthrough.assign(llm_result=REWRITE_PROMPT | llm)
+        | RunnablePassthrough.assign(llm_result=REWRITE_PROMPT | structured_llm)
         | RunnableLambda(parse_llm_response)
         | RunnableLambda(finalize)
     )
@@ -284,7 +277,7 @@ def rewrite_for_platform(
 ) -> Dict[str, Any]:
     """Rewrite text for a specific platform using the platform chain with KG context.
     
-    This is a convenience wrapper around create_platform_chain.
+    This is a convenience wrapper around create_platform_chain, specifically to call from CLI.
     For new code, prefer using create_platform_chain directly.
     
     Args:

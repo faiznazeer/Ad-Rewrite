@@ -5,10 +5,11 @@ An intelligent ad rewriting system that adapts marketing copy for different soci
 ## Overview
 
 The Ad Rewriter Agent takes input text and rewrites it for multiple platforms (Instagram, LinkedIn, Twitter, etc.) in parallel, leveraging:
-- **Neo4j Knowledge Graph**: Platform constraints, audience preferences, content styles, and relationships
-- **LangChain**: Modular chains for text processing, LLM interaction, and validation
+- **Neo4j Knowledge Graph**: Platform strategies, audience preferences, content styles, and relationships
+- **LangChain**: Modular chains for text processing, LLM interaction, and example retrieval
 - **LangGraph**: Parallel orchestration of platform-specific rewriting tasks
 - **Vector Search**: Example-based retrieval using Chroma and HuggingFace embeddings
+- **Graph RAG**: Combines structured graph knowledge with semantic vector search for context-aware rewrites
 
 ## Architecture
 
@@ -43,7 +44,7 @@ The Ad Rewriter Agent takes input text and rewrites it for multiple platforms (I
 
 - **`app/main.py`**: FastAPI endpoint accepting rewrite requests
 - **`agent/langgraph_orchestration.py`**: LangGraph-based parallel execution
-- **`agent/platform_agent.py`**: Per-platform LangChain chains (sanitization, retrieval, LLM rewriting, validation)
+- **`agent/platform_agent.py`**: Per-platform LangChain chains (KG query, example retrieval, LLM rewriting)
 - **`agent/kg_service.py`**: Neo4j knowledge graph queries with caching
 
 ## Setup
@@ -78,13 +79,18 @@ The Ad Rewriter Agent takes input text and rewrites it for multiple platforms (I
 
 4. **Populate Neo4j knowledge graph:**
    ```bash
-   python scripts/populate_kg.py          # Base nodes and constraints
+   python scripts/populate_kg.py          # Base nodes
    python scripts/populate_relationships.py  # Relationships
    python scripts/populate_examples.py     # Example ad copy
    python scripts/test_kg_queries.py      # Verify setup
    ```
 
-5. **Start the API:**
+5. **Ingest examples into vector store:**
+   ```bash
+   python -m agent.platform_agent --ingest
+   ```
+
+6. **Start the API:**
    ```bash
    uvicorn app.main:app --reload
    ```
@@ -101,8 +107,8 @@ The Ad Rewriter Agent takes input text and rewrites it for multiple platforms (I
   "audience": "b2b professionals",
   "user_intent": "purchase",
   "product_category": "tech",
-  "include_strategy_insights": true,
-  "suggest_alternative_platforms": true
+  "tone_map": {"linkedin": "professional"},
+  "include_strategy_insights": true
 }
 ```
 
@@ -118,21 +124,27 @@ The Ad Rewriter Agent takes input text and rewrites it for multiple platforms (I
       "product_category": "tech"
     }
   },
-  "validation_summary": {"total": 2, "ok": 2, "failed": 0},
   "results": [
     {
       "platform": "linkedin",
       "rewritten_text": "...",
       "explanation": "...",
-      "validation": {"ok": true, "issues": []},
-      "strategy_data": {...}
+      "examples_used": [...],
+      "strategy_data": {
+        "preferred_styles": [...],
+        "recommended_creative_types": [...],
+        "target_audiences": [...]
+      }
     }
   ],
   "strategy_insights": {
     "linkedin": {
       "recommended_styles": ["professional", "educational"],
       "recommended_creative_types": ["text-only", "video"],
-      "target_audiences": ["b2b professionals", "millennials"]
+      "target_audiences": ["b2b professionals", "millennials"],
+      "audience_preferred_styles": [...],
+      "intent_required_styles": [...],
+      "category_suitability_score": 0.85
     }
   }
 }
@@ -143,56 +155,89 @@ The Ad Rewriter Agent takes input text and rewrites it for multiple platforms (I
 - **`text`** (required): Input ad copy to rewrite
 - **`target_platforms`** (required): List of platforms (e.g., `["instagram", "linkedin"]`)
 - **`audience`** (optional): Target audience (`"gen-z"`, `"b2b professionals"`, etc.)
-- **`user_intent`** (optional): Funnel stage (`"awareness"`, `"purchase"`, etc.)
-- **`product_category`** (optional): Category (`"tech"`, `"fashion"`, etc.)
-- **`tone_map`** (optional): Per-platform tone overrides
-- **`length_prefs`** (optional): Per-platform max length overrides
-- **`include_strategy_insights`** (default: `true`): Include KG recommendations
-- **`suggest_alternative_platforms`** (default: `true`): Suggest similar platforms
+- **`user_intent`** (optional): Funnel stage (`"awareness"`, `"consideration"`, `"purchase"`, `"engagement"`)
+- **`product_category`** (optional): Category (`"tech"`, `"fashion"`, `"food"`, `"b2b"`, `"services"`)
+- **`tone_map`** (optional): Per-platform tone/style overrides (e.g., `{"linkedin": "professional"}`)
+- **`include_strategy_insights`** (default: `true`): Include KG-based strategy recommendations in response
 
 ## Knowledge Graph Schema
 
 The Neo4j knowledge graph models:
 
-- **Platforms**: Instagram, LinkedIn, TikTok, etc. with constraints (max length, emoji policy, CTA requirements)
-- **Audiences**: Gen-Z, Millennials, B2B Professionals, etc.
+- **Platforms**: Instagram, LinkedIn, TikTok, Twitter, Facebook, etc.
+- **Audiences**: Gen-Z, Millennials, B2B Professionals, Parents, etc.
 - **User Intents**: Awareness, Consideration, Purchase, Engagement
-- **Content Styles**: Professional, Energetic, Visual, Casual, etc.
-- **Creative Types**: Video, Image, Carousel, Text-only, etc.
-- **Product Categories**: Tech, Fashion, Food, B2B, etc.
+- **Content Styles**: Professional, Energetic, Visual, Casual, Educational, etc.
+- **Creative Types**: Video, Image, Carousel, Text-only, Story, etc.
+- **Product Categories**: Tech, Fashion, Food, B2B, Services, etc.
 - **Examples**: Ad copy examples linked to platforms, styles, audiences, and intents
 
 ### Key Relationships
 
-- `Platform -[:HAS_CONSTRAINT]-> Constraint`
-- `Platform -[:PREFERS_STYLE]-> ContentStyle`
-- `Platform -[:TARGETS]-> Audience`
-- `Platform -[:SUPPORTS]-> CreativeType`
-- `Audience -[:PREFERS_STYLE]-> ContentStyle`
-- `UserIntent -[:REQUIRES_STYLE]-> ContentStyle`
-- `ProductCategory -[:SUITABLE_FOR]-> Platform`
+- `Platform -[:PREFERS_STYLE {score}]-> ContentStyle`
+- `Platform -[:TARGETS {weight}]-> Audience`
+- `Platform -[:SUPPORTS {score}]-> CreativeType`
+- `Audience -[:PREFERS_STYLE {preference_score}]-> ContentStyle`
+- `UserIntent -[:REQUIRES_STYLE {strength}]-> ContentStyle`
+- `ProductCategory -[:SUITABLE_FOR {suitability_score}]-> Platform`
+- `Example -[:FOR_PLATFORM]-> Platform`
+- `Example -[:HAS_STYLE]-> ContentStyle`
+- `Example -[:TARGETS_AUDIENCE]-> Audience`
+- `Example -[:FOR_INTENT]-> UserIntent`
 
 ## How It Works
 
-1. **Request Processing**: FastAPI receives rewrite request with platform targets and optional context
+1. **Request Processing**: FastAPI receives rewrite request with platform targets and optional context (audience, intent, category)
 2. **Parallel Orchestration**: LangGraph creates parallel nodes for each platform
 3. **Platform Chain Execution** (per platform):
-   - Sanitize input text and extract entities
-   - Query Neo4j KG for constraints, styles, and strategy
-   - Retrieve similar examples from Chroma vector store
-   - Invoke LLM with platform context, constraints, examples, and strategy
-   - Validate output against platform constraints and repair if needed
-4. **Response Assembly**: Combine results with strategy insights and validation summaries
+   - Query Neo4j KG for platform strategies (styles, creative types, audience preferences)
+   - Retrieve similar examples from Chroma vector store using semantic search
+   - Invoke LLM with platform context, examples, and strategy recommendations
+   - Return rewritten text with explanation and strategy data
+4. **Response Assembly**: Combine results with strategy insights and metadata
+
+## Graph RAG Approach
+
+The system implements **Graph RAG** by combining:
+
+1. **Structured Graph Knowledge**: Neo4j stores explicit relationships (e.g., `Platform → TARGETS → Audience → PREFERS_STYLE → ContentStyle`) with weighted edges, enabling multi-hop reasoning and precise strategy recommendations.
+
+2. **Semantic Vector Search**: Chroma vector store retrieves similar ad examples using embeddings, capturing semantic similarity that complements structured knowledge.
+
+3. **Hybrid Retrieval**: The LLM receives both structured strategy data (from Neo4j) and similar examples (from Chroma), enabling context-aware rewrites that respect platform conventions while learning from successful patterns.
+
+This approach improves precision over pure vector search by leveraging explicit domain relationships, while maintaining recall through semantic example matching.
 
 ## Performance Optimizations
 
 - **Batched Neo4j Queries**: Single query replaces 8-11 separate queries per platform
 - **LRU Caching**: Platform data cached (128 entries) for faster subsequent requests
-- **Connection Pooling**: Neo4j driver configured with connection pooling
+- **Connection Pooling**: Neo4j driver configured with connection pooling (50 max connections)
 - **Parallel Execution**: LangGraph runs platform chains concurrently
-- **Strategy Data Reuse**: Strategy insights reused from rewrite results (no re-querying)
+- **Thread-Safe Initialization**: Double-check locking for embeddings and vector store singletons
 
 Expected latency: **10-20 seconds** (or **5-15 seconds** with cache) for 2 platforms.
+
+## Evaluation
+
+Evaluate the agent using examples as ground truth:
+
+```bash
+python eval/evaluate.py  # Generates eval_results.json with metrics
+```
+
+**Metrics calculated:**
+- **ROUGE-L**: Longest common subsequence overlap (precision, recall, F-measure)
+- **BLEU**: N-gram precision score with smoothing
+- **Semantic Similarity**: Cosine similarity using embeddings (same model as agent)
+- **Length Ratio**: Output length relative to ground truth
+
+The evaluation script:
+1. Loads examples from `examples.json` as ground truth
+2. Creates test cases by pairing generic inputs with example outputs
+3. Runs the agent on each test case
+4. Calculates metrics comparing predictions to ground truth
+5. Generates per-platform breakdowns and aggregate statistics
 
 ## Development
 
@@ -209,32 +254,36 @@ ad-rewriter/
 ├── scripts/
 │   ├── populate_kg.py          # Initialize KG nodes
 │   ├── populate_relationships.py  # Create relationships
-│   ├── populate_examples.py    # Load examples
-│   └── test_kg_queries.py      # Verify KG setup
+│   ├── populate_examples.py    # Load examples from examples.json
+│   ├── test_kg_queries.py      # Verify KG setup
+│   ├── README.md               # Detailed Neo4j setup guide
+│   └── QUERY_EXAMPLES.md       # Example Cypher queries
 ├── data/
-│   └── examples.json           # Example ad copy
-└── tests/
-    └── test_platform_agent.py  # Unit tests
+│   ├── examples.json           # Example ad copy (ground truth)
+│   └── kg_schema.cypher        # Neo4j schema definition
+├── eval/
+│   └── evaluate.py             # Evaluation harness with metrics
+└── requirements.txt
 ```
 
 ### Running Tests
 
 ```bash
-pytest tests/
+# Test Neo4j setup
+python scripts/test_kg_queries.py
+
+# Run evaluation
+python eval/evaluate.py
 ```
 
-### Evaluation
+## Future Enhancements
 
-Evaluate the agent using examples as ground truth:
+Potential improvements for learning and adaptation:
 
-```bash
-python eval/evaluate.py  # Generates eval_results.json with metrics
-```
+1. **LangGraph Memory Nodes**: Use checkpointing to store rewrite history and user preferences
+2. **Feedback Loop**: Add `/feedback` endpoint to collect user ratings and learn from successful rewrites
+3. **Adaptive Prompts**: Dynamically adjust prompts based on user-specific successful patterns
+4. **Performance-Based Weighting**: Weight example retrieval by success rates stored in Neo4j
+5. **A/B Testing**: Track strategy performance metrics to enable data-driven improvements
 
-**Metrics calculated:**
-- **ROUGE-L**: Longest common subsequence overlap (recall-oriented)
-- **BLEU**: N-gram precision score
-- **Semantic Similarity**: Cosine similarity using embeddings
-- **Length Ratio**: Output length relative to ground truth
-
-See `scripts/README.md` for detailed Neo4j setup instructions.
+See `scripts/README.md` for detailed Neo4j setup instructions and query examples.

@@ -12,10 +12,12 @@ from langgraph.runtime import Runtime
 
 
 def _results_reducer(a: List[Any], b: Any) -> List[Any]:
-    if b is not None or isinstance(b, list):
+    if  b is None or isinstance(b, list):
         return a
+    
     if not isinstance(b, dict):
         raise TypeError(f"Expected dict from node, got {type(b).__name__}: {b}")
+    
     return a + [b]
 
 

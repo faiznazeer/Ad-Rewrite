@@ -28,7 +28,6 @@ def create_constraints_and_indexes():
         "CREATE CONSTRAINT creativetype_name IF NOT EXISTS FOR (ct:CreativeType) REQUIRE ct.name IS UNIQUE",
         "CREATE CONSTRAINT contentstyle_name IF NOT EXISTS FOR (cs:ContentStyle) REQUIRE cs.name IS UNIQUE",
         "CREATE CONSTRAINT productcategory_name IF NOT EXISTS FOR (pc:ProductCategory) REQUIRE pc.name IS UNIQUE",
-        "CREATE CONSTRAINT constraint_name IF NOT EXISTS FOR (c:Constraint) REQUIRE c.name IS UNIQUE",
         "CREATE CONSTRAINT example_id IF NOT EXISTS FOR (e:Example) REQUIRE e.id IS UNIQUE",
     ]
     
@@ -39,7 +38,6 @@ def create_constraints_and_indexes():
         "CREATE INDEX creativetype_name_index IF NOT EXISTS FOR (ct:CreativeType) ON (ct.name)",
         "CREATE INDEX contentstyle_name_index IF NOT EXISTS FOR (cs:ContentStyle) ON (cs.name)",
         "CREATE INDEX productcategory_name_index IF NOT EXISTS FOR (pc:ProductCategory) ON (pc.name)",
-        "CREATE INDEX constraint_name_index IF NOT EXISTS FOR (c:Constraint) ON (c.name)",
         "CREATE INDEX example_id_index IF NOT EXISTS FOR (e:Example) ON (e.id)",
     ]
     
@@ -208,59 +206,6 @@ def create_product_categories():
     print(f"✓ Created {len(categories)} ProductCategory nodes")
 
 
-def create_constraints():
-    """Create Constraint nodes and link them to platforms."""
-    print("Creating Constraint nodes...")
-    
-    # Constraints from current kg.json
-    platform_constraints = {
-        "instagram": [
-            {"name": "max_length_chars", "type": "integer", "value": 2200},
-            {"name": "allow_emojis", "type": "boolean", "value": True},
-            {"name": "cta_required", "type": "boolean", "value": False},
-        ],
-        "linkedin": [
-            {"name": "max_length_chars", "type": "integer", "value": 1300},
-            {"name": "allow_emojis", "type": "boolean", "value": False},
-            {"name": "cta_required", "type": "boolean", "value": True},
-        ],
-        "facebook": [
-            {"name": "max_length_chars", "type": "integer", "value": 2000},
-            {"name": "allow_emojis", "type": "boolean", "value": True},
-            {"name": "cta_required", "type": "boolean", "value": True},
-        ],
-        "google": [
-            {"name": "max_length_chars", "type": "integer", "value": 150},
-            {"name": "allow_emojis", "type": "boolean", "value": False},
-            {"name": "cta_required", "type": "boolean", "value": True},
-        ],
-        "tiktok": [
-            {"name": "max_length_chars", "type": "integer", "value": 2200},
-            {"name": "allow_emojis", "type": "boolean", "value": True},
-            {"name": "cta_required", "type": "boolean", "value": False},
-        ],
-    }
-    
-    for platform, constraints in platform_constraints.items():
-        for constraint in constraints:
-            # Create constraint node
-            query = """
-            MERGE (c:Constraint {name: $name})
-            SET c.type = $type, c.value = $value
-            """
-            execute_query(query, constraint)
-            
-            # Link to platform
-            query = """
-            MATCH (p:Platform {name: $platform})
-            MATCH (c:Constraint {name: $name})
-            MERGE (p)-[:HAS_CONSTRAINT {value: $value}]->(c)
-            """
-            execute_query(query, {"platform": platform, **constraint})
-    
-    print(f"✓ Created Constraint nodes and linked to platforms")
-
-
 def main():
     """Main function to populate the knowledge graph."""
     print("=" * 60)
@@ -290,7 +235,6 @@ def main():
     create_creative_types()
     create_content_styles()
     create_product_categories()
-    create_constraints()
     
     print("\n" + "=" * 60)
     print("Knowledge graph population complete!")

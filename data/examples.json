@@ -60,6 +60,36 @@
     "text": "Beach towels, louder prints, softer cotton. Drop 4 is here!"
   },
   {
+    "id": "ins_11",
+    "platform": "instagram",
+    "tone": "visual",
+    "text": "Before & after: This serum transformed my skin in 2 weeks. Swipe to see the glow ✨"
+  },
+  {
+    "id": "ins_12",
+    "platform": "instagram",
+    "tone": "energetic",
+    "text": "Flash sale alert! 🚨 50% off everything ends at midnight. Use code SUMMER50. Link in bio!"
+  },
+  {
+    "id": "ins_13",
+    "platform": "instagram",
+    "tone": "fun",
+    "text": "POV: You're scrolling and find the perfect summer dress. It's in stock. You add to cart. You check out. You're ready for vacation. That's the vibe we're serving today 💫"
+  },
+  {
+    "id": "ins_14",
+    "platform": "instagram",
+    "tone": "inspirational",
+    "text": "Your morning routine sets the tone for your entire day. Start with intention, move with purpose, and end with gratitude. What's one thing you're doing today to invest in yourself? Share below 👇"
+  },
+  {
+    "id": "ins_15",
+    "platform": "instagram",
+    "tone": "casual",
+    "text": "Just dropped: Our new collection is everything you didn't know you needed. Soft fabrics, perfect fits, colors that actually make sense. Check it out before it's gone!"
+  },
+  {
     "id": "lin_01",
     "platform": "linkedin",
     "tone": "professional",
@@ -118,6 +148,36 @@
     "platform": "linkedin",
     "tone": "formal",
     "text": "Celebrating 1,000 customers and expanding our partner program."
+  },
+  {
+    "id": "lin_11",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "After analyzing 500+ B2B SaaS companies, we discovered three critical patterns that separate high-growth teams from the rest. The first? Intentional data architecture from day one. The second? Customer success metrics embedded in product decisions. The third? Strategic partnerships that amplify reach. Which of these resonates most with your experience?"
+  },
+  {
+    "id": "lin_12",
+    "platform": "linkedin",
+    "tone": "educational",
+    "text": "The future of remote work isn't about location—it's about asynchronous collaboration. Here's what we learned after transitioning 200+ employees to a fully distributed model: 1) Documentation becomes your lifeline, 2) Over-communication beats under-communication, 3) Trust is built through consistent delivery, not presence. What's your biggest challenge with remote teams?"
+  },
+  {
+    "id": "lin_13",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "We're excited to announce our Series B funding round of $45M, led by leading enterprise investors. This milestone enables us to accelerate product development, expand our global footprint, and double our engineering team. Thank you to our customers, partners, and team members who made this possible. The journey continues."
+  },
+  {
+    "id": "lin_14",
+    "platform": "linkedin",
+    "tone": "formal",
+    "text": "I'm pleased to share that we've been recognized as a Leader in the 2024 Gartner Magic Quadrant for Customer Data Platforms. This achievement reflects our commitment to innovation and customer success. We're grateful to our clients who trust us with their most critical data infrastructure needs."
+  },
+  {
+    "id": "lin_15",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "The shift from reactive to proactive customer support isn't just about technology—it's a cultural transformation. When we implemented predictive analytics across our support team, we saw a 40% reduction in ticket volume and a 25% increase in customer satisfaction scores. The key? Empowering agents with context before customers even reach out."
   },
   {
     "id": "fac_01",
@@ -180,6 +240,36 @@
     "text": "Holiday photo mini sessions—book in two clicks."
   },
   {
+    "id": "fac_11",
+    "platform": "facebook",
+    "tone": "conversational",
+    "text": "What's your favorite way to unwind after a long week? We're sharing some of our community's top picks for relaxation and self-care. From cozy reading nooks to outdoor adventures, there's something for everyone. Share your go-to activity in the comments below!"
+  },
+  {
+    "id": "fac_12",
+    "platform": "facebook",
+    "tone": "inspirational",
+    "text": "Small businesses are the heart of our community. This week, we're highlighting local entrepreneurs who are making a difference. Their stories of resilience, creativity, and dedication inspire us every day. Support local, shop local, and help these amazing businesses thrive!"
+  },
+  {
+    "id": "fac_13",
+    "platform": "facebook",
+    "tone": "friendly",
+    "text": "We're hosting a free workshop this Saturday on sustainable living practices. Learn how to reduce waste, grow your own herbs, and make eco-friendly swaps that actually work. Bring a friend and leave with actionable tips you can implement today!"
+  },
+  {
+    "id": "fac_14",
+    "platform": "facebook",
+    "tone": "conversational",
+    "text": "It's that time of year again! Our annual community festival is back with food trucks, live music, kids' activities, and local vendors. Mark your calendars for June 15th and bring the whole family. Can't wait to see you there!"
+  },
+  {
+    "id": "fac_15",
+    "platform": "facebook",
+    "tone": "upbeat",
+    "text": "Thank you to everyone who participated in our charity drive! Together, we raised over $10,000 for local food banks. Your generosity makes a real difference in our community. Stay tuned for our next initiative coming next month!"
+  },
+  {
     "id": "goo_01",
     "platform": "google",
     "tone": "neutral",
@@ -240,6 +330,36 @@
     "text": "Schedule same-day appliance repair with verified techs."
   },
   {
+    "id": "goo_11",
+    "platform": "google",
+    "tone": "neutral",
+    "text": "Free shipping over $50"
+  },
+  {
+    "id": "goo_12",
+    "platform": "google",
+    "tone": "concise",
+    "text": "20% off today only"
+  },
+  {
+    "id": "goo_13",
+    "platform": "google",
+    "tone": "neutral",
+    "text": "Same-day delivery available"
+  },
+  {
+    "id": "goo_14",
+    "platform": "google",
+    "tone": "informative",
+    "text": "Book now, pay later"
+  },
+  {
+    "id": "goo_15",
+    "platform": "google",
+    "tone": "concise",
+    "text": "Limited stock—order now"
+  },
+  {
     "id": "tik_01",
     "platform": "tiktok",
     "tone": "energetic",
@@ -298,5 +418,473 @@
     "platform": "tiktok",
     "tone": "fun",
     "text": "Vote which neon roller skate wheels glow brightest!"
+  },
+  {
+    "id": "tik_11",
+    "platform": "tiktok",
+    "tone": "humorous",
+    "text": "Me trying to be aesthetic vs me actually living my life 😂 The struggle is real but at least my skincare routine is on point"
+  },
+  {
+    "id": "tik_12",
+    "platform": "tiktok",
+    "tone": "energetic",
+    "text": "POV: You're the main character and you just found the perfect outfit that makes you feel unstoppable. This is your sign to go for it ✨"
+  },
+  {
+    "id": "tik_13",
+    "platform": "tiktok",
+    "tone": "bold",
+    "text": "Hot take: This product actually works and I'm not being paid to say this. Try it and thank me later 🔥"
+  },
+  {
+    "id": "tik_14",
+    "platform": "tiktok",
+    "tone": "playful",
+    "text": "Rate my setup 1-10 👀 I spent way too long on this but it's giving main character energy"
+  },
+  {
+    "id": "tik_15",
+    "platform": "tiktok",
+    "tone": "fun",
+    "text": "Tell me I'm wrong: This is the best snack combo and I will die on this hill. What's your go-to?"
+  },
+  {
+    "id": "twi_01",
+    "platform": "twitter",
+    "tone": "conversational",
+    "text": "What's trending in your industry today?"
+  },
+  {
+    "id": "twi_02",
+    "platform": "twitter",
+    "tone": "bold",
+    "text": "Hot take: This changes everything."
+  },
+  {
+    "id": "twi_03",
+    "platform": "twitter",
+    "tone": "casual",
+    "text": "Quick poll: What's your biggest challenge this quarter?"
+  },
+  {
+    "id": "twi_04",
+    "platform": "twitter",
+    "tone": "conversational",
+    "text": "Thread: 5 things we learned building our product."
+  },
+  {
+    "id": "twi_05",
+    "platform": "twitter",
+    "tone": "bold",
+    "text": "Unpopular opinion: Here's why this matters."
+  },
+  {
+    "id": "twi_06",
+    "platform": "twitter",
+    "tone": "professional",
+    "text": "Breaking: Major update coming next week."
+  },
+  {
+    "id": "twi_07",
+    "platform": "twitter",
+    "tone": "casual",
+    "text": "Just shipped a feature that took 3 months to build. The team crushed it 🚀"
+  },
+  {
+    "id": "twi_08",
+    "platform": "twitter",
+    "tone": "conversational",
+    "text": "The best product decisions come from listening to users, not just data. What's one user insight that changed your perspective?"
+  },
+  {
+    "id": "twi_09",
+    "platform": "twitter",
+    "tone": "bold",
+    "text": "If you're not building in public, you're missing out on the best feedback loop. Here's what we learned from 6 months of transparency"
+  },
+  {
+    "id": "twi_10",
+    "platform": "twitter",
+    "tone": "casual",
+    "text": "Shipped in 48 hours. Sometimes the best features are the simplest ones. What's the fastest you've built something meaningful?"
+  },
+  {
+    "id": "twi_11",
+    "platform": "twitter",
+    "tone": "conversational",
+    "text": "The future of work is asynchronous. Here's a thread on what we learned after going fully remote:"
+  },
+  {
+    "id": "twi_12",
+    "platform": "twitter",
+    "tone": "professional",
+    "text": "We're hiring! Looking for engineers who care about code quality and user experience. Remote-friendly, competitive comp, great team. DM if interested."
+  },
+  {
+    "id": "twi_13",
+    "platform": "twitter",
+    "tone": "bold",
+    "text": "Most startups fail because they build features, not products. Focus on solving one problem exceptionally well."
+  },
+  {
+    "id": "twi_14",
+    "platform": "twitter",
+    "tone": "casual",
+    "text": "Just hit 10K users! Thank you to everyone who believed in the vision from day one. This is just the beginning 🎉"
+  },
+  {
+    "id": "twi_15",
+    "platform": "twitter",
+    "tone": "conversational",
+    "text": "The best marketing is building something people actually want to use. Everything else is just noise."
+  },
+  {
+    "id": "you_01",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "Full tutorial: Master this skill in 10 minutes."
+  },
+  {
+    "id": "you_02",
+    "platform": "youtube",
+    "tone": "professional",
+    "text": "Expert interview: Industry insights and trends."
+  },
+  {
+    "id": "you_03",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "Deep dive: Understanding the fundamentals."
+  },
+  {
+    "id": "you_04",
+    "platform": "youtube",
+    "tone": "professional",
+    "text": "Case study analysis: What worked and what didn't."
+  },
+  {
+    "id": "you_05",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "Step-by-step guide: Everything you need to know."
+  },
+  {
+    "id": "you_06",
+    "platform": "youtube",
+    "tone": "professional",
+    "text": "Best practices: How to succeed in this field."
+  },
+  {
+    "id": "you_07",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "In this comprehensive 30-minute tutorial, we'll cover everything from the basics to advanced techniques. Whether you're a complete beginner or looking to refine your skills, this video has something for everyone. We'll start with the fundamentals, then move into practical applications, and finish with pro tips that will save you hours of trial and error."
+  },
+  {
+    "id": "you_08",
+    "platform": "youtube",
+    "tone": "professional",
+    "text": "Join us for an exclusive interview with industry leaders who are shaping the future of technology. We'll discuss emerging trends, career advice, and the skills you need to stay ahead. This conversation is packed with insights you won't find anywhere else."
+  },
+  {
+    "id": "you_09",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "After analyzing hundreds of successful projects, we've identified the key patterns that lead to breakthrough results. In this deep dive, we'll break down each pattern with real-world examples, common pitfalls to avoid, and actionable strategies you can implement immediately."
+  },
+  {
+    "id": "you_10",
+    "platform": "youtube",
+    "tone": "professional",
+    "text": "This case study walks through a complete project from conception to launch. You'll see the decision-making process, challenges we faced, solutions we implemented, and the results we achieved. Perfect for anyone looking to understand how real projects come together."
+  },
+  {
+    "id": "you_11",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "Learn the fundamentals in under 15 minutes. This beginner-friendly tutorial assumes no prior knowledge and will get you up and running quickly. We'll cover the essential concepts, walk through a complete example, and provide resources for further learning."
+  },
+  {
+    "id": "you_12",
+    "platform": "youtube",
+    "tone": "professional",
+    "text": "We sat down with three industry experts to discuss the most important trends of 2024. From AI integration to remote collaboration tools, this panel discussion covers what you need to know to stay competitive in today's market."
+  },
+  {
+    "id": "you_13",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "Master advanced techniques with this step-by-step walkthrough. We'll start with a review of the basics, then dive deep into complex scenarios, optimization strategies, and troubleshooting common issues. By the end, you'll have the confidence to tackle any challenge."
+  },
+  {
+    "id": "you_14",
+    "platform": "youtube",
+    "tone": "professional",
+    "text": "Behind the scenes: How we built a product that reached 1 million users in 6 months. This detailed breakdown covers our strategy, the tools we used, mistakes we made, and lessons learned along the way."
+  },
+  {
+    "id": "you_15",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "Common mistakes beginners make (and how to avoid them). After teaching thousands of students, we've seen the same errors repeated over and over. This video will help you skip the learning curve and start on the right foot."
+  },
+  {
+    "id": "pin_01",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "50+ ideas for your next project. Save for later!"
+  },
+  {
+    "id": "pin_02",
+    "platform": "pinterest",
+    "tone": "inspirational",
+    "text": "Dream home inspiration: Modern meets cozy."
+  },
+  {
+    "id": "pin_03",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "DIY tutorial: Transform your space on a budget."
+  },
+  {
+    "id": "pin_04",
+    "platform": "pinterest",
+    "tone": "inspirational",
+    "text": "Create the life you want, one pin at a time."
+  },
+  {
+    "id": "pin_05",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "Endless inspiration for your next adventure."
+  },
+  {
+    "id": "pin_06",
+    "platform": "pinterest",
+    "tone": "inspirational",
+    "text": "Your vision board starts here."
+  },
+  {
+    "id": "pin_07",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "Transform your living room with these budget-friendly makeover ideas. From paint colors to furniture arrangements, we've curated 25 stunning before-and-after transformations that prove you don't need a huge budget to create a space you love."
+  },
+  {
+    "id": "pin_08",
+    "platform": "pinterest",
+    "tone": "inspirational",
+    "text": "Your home should be a reflection of who you are. These design ideas combine functionality with personal style, creating spaces that inspire creativity and promote well-being. Start your transformation today."
+  },
+  {
+    "id": "pin_09",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "Kitchen renovation on a budget: 30 creative ideas that will completely transform your space without breaking the bank. From cabinet makeovers to backsplash updates, these projects are perfect for weekend DIYers."
+  },
+  {
+    "id": "pin_10",
+    "platform": "pinterest",
+    "tone": "inspirational",
+    "text": "Small changes, big impact. These simple home updates take less than a day but will make your space feel completely new. Sometimes the best transformations start with the smallest details."
+  },
+  {
+    "id": "pin_11",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "Garden design inspiration: 40 beautiful layouts for every space, from tiny balconies to sprawling backyards. Complete with plant recommendations and maintenance tips."
+  },
+  {
+    "id": "pin_12",
+    "platform": "pinterest",
+    "tone": "inspirational",
+    "text": "Your outdoor space is an extension of your home. Create a sanctuary where you can relax, entertain, and connect with nature. These ideas will help you design the perfect outdoor retreat."
+  },
+  {
+    "id": "pin_13",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "Wedding planning made easy: Complete checklists, timeline templates, and vendor recommendations. Everything you need to plan your perfect day, organized in one place."
+  },
+  {
+    "id": "pin_14",
+    "platform": "pinterest",
+    "tone": "inspirational",
+    "text": "Your special day deserves special attention to detail. From color palettes to centerpiece ideas, we've gathered inspiration that will help you create a celebration that's uniquely yours."
+  },
+  {
+    "id": "pin_15",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "Fashion inspiration: 50 outfit ideas for every season. Mix and match pieces to create looks that express your personal style while staying on trend."
+  },
+  {
+    "id": "ins_16",
+    "platform": "instagram",
+    "tone": "casual",
+    "text": "New drop"
+  },
+  {
+    "id": "ins_17",
+    "platform": "instagram",
+    "tone": "fun",
+    "text": "Sale ends tonight! 🎉"
+  },
+  {
+    "id": "ins_18",
+    "platform": "instagram",
+    "tone": "visual",
+    "text": "Link in bio ✨"
+  },
+  {
+    "id": "lin_16",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "We're hiring"
+  },
+  {
+    "id": "lin_17",
+    "platform": "linkedin",
+    "tone": "neutral",
+    "text": "New report available"
+  },
+  {
+    "id": "lin_18",
+    "platform": "linkedin",
+    "tone": "formal",
+    "text": "Partnership announcement"
+  },
+  {
+    "id": "fac_16",
+    "platform": "facebook",
+    "tone": "friendly",
+    "text": "Event this weekend!"
+  },
+  {
+    "id": "fac_17",
+    "platform": "facebook",
+    "tone": "conversational",
+    "text": "What do you think?"
+  },
+  {
+    "id": "fac_18",
+    "platform": "facebook",
+    "tone": "upbeat",
+    "text": "Thank you for your support!"
+  },
+  {
+    "id": "tik_16",
+    "platform": "tiktok",
+    "tone": "energetic",
+    "text": "POV: You found it"
+  },
+  {
+    "id": "tik_17",
+    "platform": "tiktok",
+    "tone": "fun",
+    "text": "Rate this 1-10"
+  },
+  {
+    "id": "tik_18",
+    "platform": "tiktok",
+    "tone": "playful",
+    "text": "Tell me I'm wrong"
+  },
+  {
+    "id": "twi_16",
+    "platform": "twitter",
+    "tone": "bold",
+    "text": "Hot take"
+  },
+  {
+    "id": "twi_17",
+    "platform": "twitter",
+    "tone": "casual",
+    "text": "Just shipped 🚀"
+  },
+  {
+    "id": "twi_18",
+    "platform": "twitter",
+    "tone": "conversational",
+    "text": "Thread 🧵"
+  },
+  {
+    "id": "you_16",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "Full tutorial available"
+  },
+  {
+    "id": "you_17",
+    "platform": "youtube",
+    "tone": "professional",
+    "text": "Expert interview"
+  },
+  {
+    "id": "you_18",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "Step-by-step guide"
+  },
+  {
+    "id": "pin_16",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "Save for later!"
+  },
+  {
+    "id": "pin_17",
+    "platform": "pinterest",
+    "tone": "inspirational",
+    "text": "Dream big"
+  },
+  {
+    "id": "pin_18",
+    "platform": "pinterest",
+    "tone": "visual",
+    "text": "DIY ideas"
+  },
+  {
+    "id": "ins_19",
+    "platform": "instagram",
+    "tone": "energetic",
+    "text": "This product changed my entire skincare routine and I'm not exaggerating. After just two weeks of consistent use, my skin went from dull and uneven to glowing and smooth. The key ingredients work together to target multiple concerns at once—fine lines, dark spots, and texture. Plus, it's cruelty-free and works for all skin types. If you're on the fence, this is your sign to try it. You won't regret it, I promise! Link in bio to shop ✨"
+  },
+  {
+    "id": "lin_19",
+    "platform": "linkedin",
+    "tone": "professional",
+    "text": "The most successful product launches I've seen share three common characteristics: clear problem definition, early user validation, and iterative development. When we launched our latest feature, we spent the first month just talking to potential users. We didn't write a single line of code until we understood exactly what problem we were solving and why existing solutions weren't working. This approach saved us months of development time and resulted in a product that users actually wanted. The lesson? Build in public, listen actively, and iterate quickly based on real feedback, not assumptions."
+  },
+  {
+    "id": "fac_19",
+    "platform": "facebook",
+    "tone": "conversational",
+    "text": "We're so excited to share that our community garden project is finally complete! After months of planning, fundraising, and hard work from dozens of volunteers, we now have a beautiful space where neighbors can grow fresh produce, learn about sustainable gardening, and connect with each other. The garden features raised beds for vegetables, a pollinator garden to support local bees and butterflies, and a composting area. We'll be hosting workshops throughout the summer on topics like organic pest control, companion planting, and preserving your harvest. Thank you to everyone who made this possible—your support means the world to us!"
+  },
+  {
+    "id": "tik_19",
+    "platform": "tiktok",
+    "tone": "humorous",
+    "text": "Plot twist: I spent $200 on skincare products thinking they would magically fix my skin, but it turns out the real secret was just drinking more water and getting enough sleep. Who would have thought? 😂 But seriously, this routine actually works and I'm not being paid to say this. Sometimes the simplest solutions are the best ones. What's your skincare secret?"
+  },
+  {
+    "id": "twi_19",
+    "platform": "twitter",
+    "tone": "bold",
+    "text": "Most people think building a product is about features. They're wrong. It's about solving a problem so well that users can't imagine going back to the old way. When we focused on the problem instead of the solution, everything changed. Our user retention went up 300%. Our support tickets went down 80%. Our revenue tripled. The lesson? Build for the problem, not for the feature list."
+  },
+  {
+    "id": "you_19",
+    "platform": "youtube",
+    "tone": "educational",
+    "text": "In this comprehensive guide, we'll walk through everything you need to know to get started, from the absolute basics to advanced techniques. We'll cover tool selection, workspace setup, safety considerations, and common beginner mistakes. Then we'll dive into hands-on projects that will help you build confidence and develop your skills. Each project builds on the previous one, so by the end of this series, you'll have a solid foundation and the ability to tackle more complex challenges. We've also included troubleshooting sections for each project, so when things don't go as planned (which happens to everyone), you'll know exactly how to fix it."
+  },
+  {
+    "id": "pin_19",
+    "platform": "pinterest",
+    "tone": "inspirational",
+    "text": "Your home is more than just a place to live—it's a canvas for self-expression, a sanctuary for rest, and a gathering place for the people you love. Every design choice you make tells a story about who you are and what matters to you. Whether you're drawn to minimalist aesthetics or maximalist collections, modern lines or vintage charm, your space should reflect your unique personality. Start with what you love, build around what you need, and don't be afraid to experiment. The best homes evolve over time, growing and changing just like the people who live in them."
   }
 ]

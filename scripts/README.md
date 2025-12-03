@@ -36,7 +36,7 @@ python -c "from agent.kg_service import verify_connection; print('Connected!' if
 ```
 
 ### 2. Populate Base Nodes
-This creates all node types (Platforms, Audiences, Intents, etc.) and constraints:
+This creates all node types (Platforms, Audiences, Intents, etc.):
 ```bash
 python scripts/populate_kg.py
 ```
@@ -60,16 +60,15 @@ This script creates:
 - **CreativeType → Platform** (WORKS_BEST_ON): Best platforms for each creative type
 
 ### 4. Populate Examples
-This loads existing examples from `examples.json` and generates additional examples to reach 500+ total:
+This loads examples from `examples.json` and creates Example nodes in Neo4j:
 ```bash
 python scripts/populate_examples.py
 ```
 
 This script:
-- **Loads existing examples** (~302) from `data/examples.json`
+- **Loads examples** from `data/examples.json`
 - **Creates Example nodes** with metadata (performance_score, engagement_rate)
 - **Links examples** to Platform, ContentStyle, Audience, and UserIntent nodes
-- **Generates 200+ new examples** using templates and patterns
 - **Infers relationships** based on platform characteristics and text analysis
 
 Each example is linked via:
@@ -87,7 +86,6 @@ python scripts/test_kg_queries.py
 This test script verifies:
 - ✅ Neo4j connection
 - ✅ Node counts (all node types created)
-- ✅ Platform constraints retrieval
 - ✅ Platform relationships (audiences, creative types, styles)
 - ✅ Audience preferences
 - ✅ Intent requirements
@@ -109,7 +107,6 @@ The knowledge graph models:
 - **Creative Types**: Video, Image, Carousel, etc.
 - **Content Styles**: Professional, Energetic, Visual, etc.
 - **Product Categories**: Tech, Fashion, Food, etc.
-- **Constraints**: Validation rules (max length, emoji policy, etc.)
 - **Examples**: Ad copy examples with metadata
 
 ## Accessing Neo4j Browser
@@ -124,10 +121,6 @@ Once Neo4j is running, access the browser at:
 ```cypher
 // View all platforms
 MATCH (p:Platform) RETURN p
-
-// Get constraints for Instagram
-MATCH (p:Platform {name: 'instagram'})-[:HAS_CONSTRAINT]->(c:Constraint)
-RETURN c.name, c.value
 
 // Find platforms targeting Gen-Z
 MATCH (p:Platform)-[:TARGETS]->(a:Audience {name: 'gen-z'})

@@ -11,12 +11,6 @@ RETURN p.name, p.description, p.type
 ORDER BY p.name
 ```
 
-### View All Constraints for a Platform
-```cypher
-MATCH (p:Platform {name: 'instagram'})-[:HAS_CONSTRAINT]->(c:Constraint)
-RETURN c.name, c.type, c.value
-```
-
 ### Count All Nodes by Type
 ```cypher
 MATCH (n)
@@ -26,14 +20,12 @@ ORDER BY count DESC
 
 ## Platform Queries
 
-### Get Platform Strategy (Constraints + Styles + Creative Types)
+### Get Platform Strategy (Styles + Creative Types)
 ```cypher
 MATCH (p:Platform {name: 'linkedin'})
-OPTIONAL MATCH (p)-[:HAS_CONSTRAINT]->(c:Constraint)
 OPTIONAL MATCH (p)-[:PREFERS_STYLE]->(cs:ContentStyle)
 OPTIONAL MATCH (p)-[:SUPPORTS]->(ct:CreativeType)
 RETURN p.name,
-       collect(DISTINCT c.name) as constraints,
        collect(DISTINCT cs.name) as styles,
        collect(DISTINCT ct.name) as creative_types
 ```

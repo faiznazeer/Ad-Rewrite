@@ -61,15 +61,13 @@ def evaluate_sample_examples():
 					"platform": out.get("platform"),
 					"rewritten": out.get("rewritten_text"),
 					"explanation": out.get("explanation"),
-					"ok": out.get("validation", {}).get("ok"),
-					"issues": ";".join(out.get("validation", {}).get("issues", [])),
 				}
 			)
 
 	# write csv
 	with open(OUT_CSV, "w", newline="", encoding="utf-8") as f:
 		writer = csv.DictWriter(
-			f, fieldnames=["id", "input", "platform", "rewritten", "explanation", "ok", "issues"]
+			f, fieldnames=["id", "input", "platform", "rewritten", "explanation"]
 		)
 		writer.writeheader()
 		for r in rows:

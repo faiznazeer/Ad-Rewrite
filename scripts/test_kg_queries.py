@@ -60,7 +60,6 @@ def test_node_counts():
         "CreativeType",
         "ContentStyle",
         "ProductCategory",
-        "Constraint",
         "Example",
     ]
     
@@ -70,23 +69,6 @@ def test_node_counts():
         count = result[0]["count"] if result else 0
         status = "✓" if count > 0 else "✗"
         print(f"  {status} {node_type}: {count} nodes")
-
-
-def test_platform_constraints():
-    """Test platform constraints retrieval."""
-    print_section("Platform Constraints")
-    
-    platforms = ["instagram", "linkedin", "tiktok", "facebook", "google"]
-    
-    for platform in platforms:
-        strategy = get_platform_data_batch_cached(platform)
-        constraints = strategy.get("constraints", {})
-        if constraints:
-            print(f"\n  {platform.upper()}:")
-            for key, value in constraints.items():
-                print(f"    - {key}: {value}")
-        else:
-            print(f"  ✗ No constraints found for {platform}")
 
 
 def test_platform_relationships():
@@ -274,22 +256,26 @@ def test_kg_service_functions():
     """Test kg_service.py functions."""
     print_section("Testing kg_service.py Functions")
     
-    # Test get_platform_data_batch_cached (constraints)
-    print("\n  1. get_platform_data_batch_cached('instagram') - constraints:")
+    # Test get_platform_data_batch_cached (basic)
+    print("\n  1. get_platform_data_batch_cached('instagram'):")
     strategy = get_platform_data_batch_cached("instagram")
-    constraints = strategy.get("constraints", {})
-    print(f"     {constraints}")
+    print(f"     Preferred Styles: {strategy.get('preferred_styles', [])[:3]}")
+    print(f"     Recommended Creative Types: {strategy.get('recommended_creative_types', [])[:3]}")
+    print(f"     Target Audiences: {strategy.get('target_audiences', [])[:3]}")
     
-    # Test get_platform_data_batch_cached (full strategy)
+    # Test get_platform_data_batch_cached (with context)
     print("\n  2. get_platform_data_batch_cached('linkedin', audience='b2b professionals', intent='purchase'):")
     strategy = get_platform_data_batch_cached(
         platform="linkedin",
         audience="b2b professionals",
         intent="purchase",
     )
-    print(f"     Constraints: {strategy.get('constraints', {})}")
     print(f"     Preferred Styles: {strategy.get('preferred_styles', [])[:3]}")
     print(f"     Recommended Creative Types: {strategy.get('recommended_creative_types', [])[:3]}")
+    if "audience_preferred_styles" in strategy:
+        print(f"     Audience Preferred Styles: {strategy['audience_preferred_styles'][:3]}")
+    if "intent_required_styles" in strategy:
+        print(f"     Intent Required Styles: {strategy['intent_required_styles'][:3]}")
 
 
 def main():
@@ -305,7 +291,6 @@ def main():
     
     # Run all tests
     test_node_counts()
-    test_platform_constraints()
     test_platform_relationships()
     test_platform_creativetypes()
     test_platform_styles()

@@ -29,10 +29,6 @@ CREATE INDEX contentstyle_name_index IF NOT EXISTS FOR (cs:ContentStyle) ON (cs.
 CREATE CONSTRAINT productcategory_name IF NOT EXISTS FOR (pc:ProductCategory) REQUIRE pc.name IS UNIQUE;
 CREATE INDEX productcategory_name_index IF NOT EXISTS FOR (pc:ProductCategory) ON (pc.name);
 
-// Constraint nodes
-CREATE CONSTRAINT constraint_name IF NOT EXISTS FOR (c:Constraint) REQUIRE c.name IS UNIQUE;
-CREATE INDEX constraint_name_index IF NOT EXISTS FOR (c:Constraint) ON (c.name);
-
 // Example nodes
 CREATE CONSTRAINT example_id IF NOT EXISTS FOR (e:Example) REQUIRE e.id IS UNIQUE;
 CREATE INDEX example_id_index IF NOT EXISTS FOR (e:Example) ON (e.id);
@@ -47,8 +43,6 @@ CREATE INDEX example_id_index IF NOT EXISTS FOR (e:Example) ON (e.id);
 // CreativeType: {name, format, description}
 // ContentStyle: {name, tone, description}
 // ProductCategory: {name, industry, description}
-// Constraint: {name, type, value, description}
-//   - type: "boolean", "integer", "string", "list"
 // Example: {id, text, platform, tone, performance_score, engagement_rate, created_at}
 
 // ============================================================================
@@ -58,9 +52,7 @@ CREATE INDEX example_id_index IF NOT EXISTS FOR (e:Example) ON (e.id);
 // Platform relationships
 // (Platform)-[:TARGETS {weight: float 0-1}]->(Audience)
 // (Platform)-[:SUPPORTS {score: float 0-1}]->(CreativeType)
-// (Platform)-[:HAS_CONSTRAINT {value: any}]->(Constraint)
 // (Platform)-[:PREFERS_STYLE {score: float 0-1}]->(ContentStyle)
-// (Platform)-[:SHARES_AUDIENCE_WITH {overlap_pct: float 0-1}]->(Platform)
 
 // Audience relationships
 // (Audience)-[:PREFERS_STYLE {preference_score: float 0-1}]->(ContentStyle)
@@ -91,20 +83,11 @@ CREATE INDEX example_id_index IF NOT EXISTS FOR (e:Example) ON (e.id);
 // EXAMPLE QUERIES
 // ============================================================================
 
-// Get all constraints for Instagram
-// MATCH (p:Platform {name: 'instagram'})-[:HAS_CONSTRAINT]->(c:Constraint)
-// RETURN c.name, c.value, c.type
-
 // Get recommended styles for LinkedIn targeting B2B professionals with purchase intent
 // MATCH (p:Platform {name: 'linkedin'})-[:PREFERS_STYLE]->(s:ContentStyle)
 // MATCH (a:Audience {name: 'b2b professionals'})-[:PREFERS_STYLE]->(s2:ContentStyle)
 // MATCH (ui:UserIntent {name: 'purchase'})-[:REQUIRES_STYLE]->(s3:ContentStyle)
 // RETURN DISTINCT s.name, s2.name, s3.name
-
-// Find platforms that share audiences with Instagram
-// MATCH (p1:Platform {name: 'instagram'})-[:SHARES_AUDIENCE_WITH]->(p2:Platform)
-// RETURN p2.name, overlap_pct
-// ORDER BY overlap_pct DESC
 
 // Get creative types that work best for tech products on LinkedIn
 // MATCH (pc:ProductCategory {name: 'tech'})-[:SUITABLE_FOR]->(p:Platform {name: 'linkedin'})

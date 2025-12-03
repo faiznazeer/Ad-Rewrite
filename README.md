@@ -211,12 +211,10 @@ This approach improves precision over pure vector search by leveraging explicit 
 ## Performance Optimizations
 
 - **Batched Neo4j Queries**: Single query replaces 8-11 separate queries per platform
-- **LRU Caching**: Platform data cached (128 entries) for faster subsequent requests
 - **Connection Pooling**: Neo4j driver configured with connection pooling (50 max connections)
 - **Parallel Execution**: LangGraph runs platform chains concurrently
 - **Thread-Safe Initialization**: Double-check locking for embeddings and vector store singletons
 
-Expected latency: **10-20 seconds** (or **5-15 seconds** with cache) for 2 platforms.
 
 ## Evaluation
 

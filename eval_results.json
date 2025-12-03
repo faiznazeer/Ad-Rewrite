@@ -1,0 +1,240 @@
+{
+  "summary": {
+    "rouge_l": {
+      "mean": 0.4982759608317146,
+      "median": 0.48484848484848486,
+      "std": 0.21154449525284605
+    },
+    "rouge_l_precision": {
+      "mean": 0.4273293862999745,
+      "median": 0.39,
+      "std": 0.25375120414616287
+    },
+    "rouge_l_recall": {
+      "mean": 0.7203042328042328,
+      "median": 0.75,
+      "std": 0.21263606868115548
+    },
+    "bleu": {
+      "mean": 0.11500083429825368,
+      "median": 0.07028794369940831,
+      "std": 0.12152224030818395
+    },
+    "semantic_similarity": {
+      "mean": 0.8262156634847496,
+      "median": 0.8700845571896392,
+      "std": 0.12598963931042859
+    },
+    "length_ratio": {
+      "mean": 2.2513196841225005,
+      "median": 1.6280573025856044,
+      "std": 1.422996169849829
+    }
+  },
+  "results": [
+    {
+      "test_case": {
+        "input": "swipe into our sunset yoga series—spots go fast. 🌅🧘‍♀️",
+        "platform": "instagram",
+        "ground_truth": "Swipe into our sunset yoga series—spots go fast! 🌅🧘‍♀️",
+        "tone": "fun"
+      },
+      "predicted": "Slide into golden-hour yoga — fiery skies, slow breaths. Limited mats. 🌅✨🧘‍♀️",
+      "metrics": {
+        "rouge_l": 0.19999999999999998,
+        "rouge_l_precision": 0.18181818181818182,
+        "rouge_l_recall": 0.2222222222222222,
+        "bleu": 0.020255986027125642,
+        "semantic_similarity": 0.5636865280692691,
+        "length_ratio": 1.4259259259259258
+      }
+    },
+    {
+      "test_case": {
+        "input": "weekend brunch vibes with bottomless cold brew. tag your crew.",
+        "platform": "instagram",
+        "ground_truth": "Weekend brunch vibes with bottomless cold brew. Tag your crew!",
+        "tone": "playful"
+      },
+      "predicted": "Sunlit brunch tables + bottomless cold brew — tag your squad and pull up ☕️✨",
+      "metrics": {
+        "rouge_l": 0.5454545454545454,
+        "rouge_l_precision": 0.5,
+        "rouge_l_recall": 0.6,
+        "bleu": 0.04179882049216857,
+        "semantic_similarity": 0.7040955840249089,
+        "length_ratio": 1.2258064516129032
+      }
+    },
+    {
+      "test_case": {
+        "input": "neon kicks dropping at midnight. first 50 get custom laces.",
+        "platform": "instagram",
+        "ground_truth": "Neon kicks dropping at midnight. First 50 get custom laces.",
+        "tone": "bold"
+      },
+      "predicted": "Midnight neon drop ⚡️✨ First 50 score custom glow laces — set your alarms ⏰🌙",
+      "metrics": {
+        "rouge_l": 0.5454545454545454,
+        "rouge_l_precision": 0.5,
+        "rouge_l_recall": 0.6,
+        "bleu": 0.033241378434410024,
+        "semantic_similarity": 0.7160095044027389,
+        "length_ratio": 1.2881355932203389
+      }
+    },
+    {
+      "test_case": {
+        "input": "announcing our mentorship cohort focused on climate analytics.",
+        "platform": "linkedin",
+        "ground_truth": "Announcing our mentorship cohort focused on climate analytics.",
+        "tone": "professional"
+      },
+      "predicted": "We’re launching a mentorship cohort in climate analytics for analysts, sustainability professionals, and researchers seeking applied skills. Participants will be paired with industry mentors, work on real-world data projects, and build a portfolio focused on decision-ready climate insights. Limited seats — apply now or learn more in the comments.",
+      "metrics": {
+        "rouge_l": 0.1694915254237288,
+        "rouge_l_precision": 0.09803921568627451,
+        "rouge_l_recall": 0.625,
+        "bleu": 0.011842046122543795,
+        "semantic_similarity": 0.8751445867360579,
+        "length_ratio": 5.612903225806452
+      }
+    },
+    {
+      "test_case": {
+        "input": "q3 insights: how mid-market teams automate onboarding at scale.",
+        "platform": "linkedin",
+        "ground_truth": "Q3 insights: How mid-market teams automate onboarding at scale.",
+        "tone": "neutral"
+      },
+      "predicted": "Q3 Insights — How Mid‑Market Teams Scale Onboarding with Automation. Explore strategies, tools, and KPIs that help reduce ramp time and improve retention. Read the full Q3 report.",
+      "metrics": {
+        "rouge_l": 0.3684210526315789,
+        "rouge_l_precision": 0.25,
+        "rouge_l_recall": 0.7,
+        "bleu": 0.009498525867740094,
+        "semantic_similarity": 0.8817901690389637,
+        "length_ratio": 2.8412698412698414
+      }
+    },
+    {
+      "test_case": {
+        "input": "join thursday's webinar on ai compliance readiness.",
+        "platform": "linkedin",
+        "ground_truth": "Join Thursday's webinar on AI compliance readiness.",
+        "tone": "professional"
+      },
+      "predicted": "Join us this Thursday for a webinar on AI compliance readiness. Learn practical steps to assess risk, implement controls, and prepare your organization — register today.",
+      "metrics": {
+        "rouge_l": 0.42424242424242425,
+        "rouge_l_precision": 0.28,
+        "rouge_l_recall": 0.875,
+        "bleu": 0.14153945350617028,
+        "semantic_similarity": 0.9361818203350648,
+        "length_ratio": 3.3137254901960786
+      }
+    },
+    {
+      "test_case": {
+        "input": "neighborhood night market returns friday—live bands + bites.",
+        "platform": "facebook",
+        "ground_truth": "Neighborhood night market returns Friday—live bands + bites.",
+        "tone": "friendly"
+      },
+      "predicted": "Guess what’s back? The neighborhood night market returns this Friday — live bands, tasty bites, and good vibes. Bring your friends and swing by! Hit “Going” and share the fun.",
+      "metrics": {
+        "rouge_l": 0.4210526315789474,
+        "rouge_l_precision": 0.26666666666666666,
+        "rouge_l_recall": 1.0,
+        "bleu": 0.07772174600740504,
+        "semantic_similarity": 0.8561513946226171,
+        "length_ratio": 2.9166666666666665
+      }
+    },
+    {
+      "test_case": {
+        "input": "parents, save 25% on stem summer camps before may 15.",
+        "platform": "facebook",
+        "ground_truth": "Parents, save 25% on STEM summer camps before May 15.",
+        "tone": "upbeat"
+      },
+      "predicted": "Hey parents — save 25% on STEM summer camps when you register by May 15. Hurry — spots fill fast!",
+      "metrics": {
+        "rouge_l": 0.6428571428571429,
+        "rouge_l_precision": 0.5,
+        "rouge_l_recall": 0.9,
+        "bleu": 0.26529518334824453,
+        "semantic_similarity": 0.8650245276432205,
+        "length_ratio": 1.830188679245283
+      }
+    },
+    {
+      "test_case": {
+        "input": "diy patio bundle ships free this week only.",
+        "platform": "facebook",
+        "ground_truth": "DIY patio bundle ships free this week only.",
+        "tone": "informal"
+      },
+      "predicted": "Ready to upgrade your backyard? Get our DIY Patio Bundle — free shipping this week only. Tap to order and start building your perfect outdoor hangout.",
+      "metrics": {
+        "rouge_l": 0.42424242424242425,
+        "rouge_l_precision": 0.28,
+        "rouge_l_recall": 0.875,
+        "bleu": 0.06285414139141159,
+        "semantic_similarity": 0.6931340123604345,
+        "length_ratio": 3.488372093023256
+      }
+    },
+    {
+      "test_case": {
+        "input": "shop eco-certified laundry strips with free 2-day shipping.",
+        "platform": "google",
+        "ground_truth": "Shop eco-certified laundry strips with free 2-day shipping.",
+        "tone": "neutral"
+      },
+      "predicted": "Eco-certified laundry strips. Free 2-day shipping.",
+      "metrics": {
+        "rouge_l": 0.888888888888889,
+        "rouge_l_precision": 1.0,
+        "rouge_l_recall": 0.8,
+        "bleu": 0.18204651199034363,
+        "semantic_similarity": 0.9661761745273845,
+        "length_ratio": 0.847457627118644
+      }
+    },
+    {
+      "test_case": {
+        "input": "compare top-rated budget laptops under $700 today.",
+        "platform": "google",
+        "ground_truth": "Compare top-rated budget laptops under $700 today.",
+        "tone": "neutral"
+      },
+      "predicted": "Compare top-rated laptops under $700 — specs, reviews & deals today.",
+      "metrics": {
+        "rouge_l": 0.7777777777777777,
+        "rouge_l_precision": 0.7,
+        "rouge_l_recall": 0.875,
+        "bleu": 0.12278260149096115,
+        "semantic_similarity": 0.9424919599474413,
+        "length_ratio": 1.36
+      }
+    },
+    {
+      "test_case": {
+        "input": "reserve downtown coworking desks with hourly passes.",
+        "platform": "google",
+        "ground_truth": "Reserve downtown coworking desks with hourly passes.",
+        "tone": "informative"
+      },
+      "predicted": "Reserve downtown coworking desks by the hour.",
+      "metrics": {
+        "rouge_l": 0.5714285714285714,
+        "rouge_l_precision": 0.5714285714285714,
+        "rouge_l_recall": 0.5714285714285714,
+        "bleu": 0.41113361690051975,
+        "semantic_similarity": 0.9147017001088938,
+        "length_ratio": 0.8653846153846154
+      }
+    }
+  ]
+}

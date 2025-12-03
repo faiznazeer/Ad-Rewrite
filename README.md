@@ -223,4 +223,18 @@ ad-rewriter/
 pytest tests/
 ```
 
+### Evaluation
+
+Evaluate the agent using examples as ground truth:
+
+```bash
+python eval/evaluate.py  # Generates eval_results.json with metrics
+```
+
+**Metrics calculated:**
+- **ROUGE-L**: Longest common subsequence overlap (recall-oriented)
+- **BLEU**: N-gram precision score
+- **Semantic Similarity**: Cosine similarity using embeddings
+- **Length Ratio**: Output length relative to ground truth
+
 See `scripts/README.md` for detailed Neo4j setup instructions.
